@@ -115,6 +115,14 @@ function setupEventListeners() {
             }
         });
     }
+
+    // Notifications button
+    document.getElementById('notifications-btn')?.addEventListener('click', toggleNotifications);
+
+    // Close notifications on outside click
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.notifications-wrapper')) closeNotifications();
+    });
 }
 
 // =====================
@@ -810,7 +818,6 @@ function sendReminder(invoiceId) {
 }
 
 function printInvoice(invoiceId) {
-    showToast('info', 'Print', 'Opening print dialog...');
     window.print();
 }
 
@@ -1251,20 +1258,6 @@ function renderRequestDetail(requestId) {
                             <span class="info-value">FCCT</span>
                         </div>
                         ` : ''}
-                    </div>
-                </div>
-                
-                <!-- FCCT Emergency Contact -->
-                <div class="emergency-panel">
-                    <div class="emergency-header">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 006.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 011.767-1.052l3.223.716A1.5 1.5 0 0118 15.352V16.5a1.5 1.5 0 01-1.5 1.5H15c-1.149 0-2.263-.15-3.326-.43A13.022 13.022 0 012.43 8.326 13.019 13.019 0 012 5V3.5z"/></svg>
-                        <span>Emergency Support</span>
-                    </div>
-                    <div class="emergency-body">
-                        <p>For urgent travel changes or emergencies:</p>
-                        <a href="tel:+61290001234" class="emergency-phone">📞 +61 2 9000 1234</a>
-                        <p class="emergency-note">FCCT 24/7 Hotline</p>
-                    </div>
                 </div>
             </div>
         </div>
@@ -1991,6 +1984,115 @@ function changePassword() {
     }
 }
 
+// =====================
+// NOTIFICATIONS SYSTEM
+// =====================
+const NotificationsState = {
+    notifications: [
+        { id: 1, type: 'approval', title: 'Request Approved', message: 'REQ-2026-001 has been approved by David', time: '10 minutes ago', read: false, requestId: 'REQ-2026-001' },
+        { id: 2, type: 'action', title: 'Action Required', message: 'REQ-2026-002 needs your review', time: '1 hour ago', read: false, requestId: 'REQ-2026-002' },
+        { id: 3, type: 'update', title: 'Request Updated', message: 'Emma uploaded new documents to REQ-2026-003', time: '2 hours ago', read: false, requestId: 'REQ-2026-003' }
+    ]
+};
+
+function toggleNotifications(e) {
+    e?.stopPropagation();
+    const dropdown = document.getElementById('notifications-dropdown');
+    const isHidden = dropdown?.classList.contains('hidden');
+
+    if (isHidden) {
+        dropdown.classList.remove('hidden');
+        renderNotifications();
+    } else {
+        dropdown?.classList.add('hidden');
+    }
+}
+
+function closeNotifications() {
+    document.getElementById('notifications-dropdown')?.classList.add('hidden');
+}
+
+function renderNotifications() {
+    const list = document.getElementById('notifications-list');
+    if (!list) return;
+
+    const notifications = NotificationsState.notifications;
+
+    if (notifications.length === 0) {
+        list.innerHTML = `
+            <div class="notifications-empty">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" />
+                </svg>
+                <p>No new notifications</p>
+            </div>
+        `;
+        return;
+    }
+
+    list.innerHTML = notifications.map(n => `
+        <div class="notification-item ${n.read ? 'read' : ''}" onclick="handleNotificationClick(${n.id})">
+            <div class="notification-icon ${n.type}">
+                ${getNotificationIcon(n.type)}
+            </div>
+            <div class="notification-content">
+                <div class="notification-title">${n.title}</div>
+                <p class="notification-message">${n.message}</p>
+                <span class="notification-time">${n.time}</span>
+            </div>
+            ${!n.read ? '<span class="notification-dot"></span>' : ''}
+        </div>
+    `).join('');
+}
+
+function getNotificationIcon(type) {
+    const icons = {
+        approval: '<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"/></svg>',
+        action: '<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"/></svg>',
+        update: '<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z"/></svg>'
+    };
+    return icons[type] || icons.update;
+}
+
+function handleNotificationClick(id) {
+    const notification = NotificationsState.notifications.find(n => n.id === id);
+    if (notification) {
+        notification.read = true;
+        updateNotificationCount();
+        closeNotifications();
+        // Navigate to the related request
+        if (notification.requestId) {
+            viewRequestDetail(notification.requestId);
+        }
+    }
+}
+
+function markNotificationRead(id) {
+    const notification = NotificationsState.notifications.find(n => n.id === id);
+    if (notification) {
+        notification.read = true;
+        updateNotificationCount();
+        renderNotifications();
+    }
+}
+
+function clearAllNotifications() {
+    NotificationsState.notifications = [];
+    updateNotificationCount();
+    renderNotifications();
+    closeNotifications();
+    showToast('success', 'Notifications Cleared', 'All notifications have been cleared.');
+}
+
+function updateNotificationCount() {
+    const count = NotificationsState.notifications.filter(n => !n.read).length;
+    const badge = document.getElementById('notification-count');
+    if (badge) {
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'flex' : 'none';
+    }
+}
+
 function updateNotificationPref(type, enabled) {
     showToast('success', 'Preference Updated', `${type.charAt(0).toUpperCase() + type.slice(1)} notifications ${enabled ? 'enabled' : 'disabled'}.`);
 }
@@ -2023,4 +2125,9 @@ window.printInvoice = printInvoice;
 window.generateInvoiceFromRequest = generateInvoiceFromRequest;
 window.handleSearch = handleSearch;
 window.clearSearch = clearSearch;
+window.toggleNotifications = toggleNotifications;
+window.closeNotifications = closeNotifications;
+window.markNotificationRead = markNotificationRead;
+window.handleNotificationClick = handleNotificationClick;
+window.clearAllNotifications = clearAllNotifications;
 window.AppState = AppState;

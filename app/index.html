@@ -131,12 +131,29 @@
                 </div>
 
                 <div class="top-nav-right">
-                    <button class="nav-icon-btn" aria-label="Notifications" id="notifications-btn">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" />
-                        </svg>
-                        <span class="notification-badge">3</span>
-                    </button>
+                    <div class="notifications-wrapper">
+                        <button class="nav-icon-btn" aria-label="Notifications" id="notifications-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" />
+                            </svg>
+                            <span class="notification-badge" id="notification-count">3</span>
+                        </button>
+                        <div id="notifications-dropdown" class="notifications-dropdown hidden">
+                            <div class="notifications-header">
+                                <span class="notifications-title">Notifications</span>
+                                <button class="notifications-clear-btn" onclick="clearAllNotifications()">Clear
+                                    all</button>
+                            </div>
+                            <div class="notifications-list" id="notifications-list">
+                                <!-- Notifications will be dynamically inserted here -->
+                            </div>
+                            <div class="notifications-footer">
+                                <a href="#"
+                                    onclick="navigateTo('all-requests'); closeNotifications(); return false;">View all
+                                    activity</a>
+                            </div>
+                        </div>
+                    </div>
 
                     <button class="nav-icon-btn" aria-label="Help">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
