@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" fill="none">
+  <rect x="2" y="8" width="34" height="34" rx="4" fill="#00573D"/>
+  <path d="M10 28L16 22L26 32" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M22 24L26 20L30 24" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="46" y="32" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="600" fill="#00573D">MHFA Australia</text>
+</svg>

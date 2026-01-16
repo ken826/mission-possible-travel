@@ -1,0 +1,373 @@
+/* ===================================
+   MISSION: POSSIBLE — Design Tokens
+   MHFA Australia Brand Guidelines 2024
+   =================================== */
+
+:root {
+   /* =====================
+       PRIMARY BRAND COLOURS
+       ===================== */
+   --color-primary: #00573D;
+   /* MHFA Dark Green - Primary brand */
+   --color-primary-hover: #004832;
+   /* Slightly darker for hover */
+   --color-primary-light: #006B4D;
+   /* Slightly lighter variant */
+
+   --color-secondary: #00AA52;
+   /* MHFA Green - Secondary */
+   --color-secondary-hover: #009547;
+
+   --color-accent: #B2D136;
+   /* MHFA Light Green - Accent (sparingly) */
+   --color-accent-muted: #C5DC5F;
+
+   /* =====================
+       NEUTRALS
+       ===================== */
+   --color-black: #000000;
+   --color-white: #FFFFFF;
+   --color-grey-900: #1a1a1a;
+   --color-grey-800: #333333;
+   --color-grey-700: #4d4d4d;
+   --color-grey-600: #53565A;
+   /* Cool Grey 11 - Strong secondary text */
+   --color-grey-500: #666666;
+   --color-grey-400: #939597;
+   /* Cool Grey - Secondary text, icons */
+   --color-grey-300: #b3b3b3;
+   --color-grey-200: #D9D9D6;
+   /* Cool Grey 1 - Dividers, subtle bg */
+   --color-grey-100: #ededed;
+   --color-grey-50: #f7f7f7;
+
+   /* =====================
+       STATUS COLOURS
+       ===================== */
+   /* Blues / Info */
+   --color-navy: #201547;
+   --color-blue-dark: #004C97;
+   --color-blue: #0072CE;
+   --color-blue-light: #71C5E8;
+   --color-teal: #009CA6;
+   --color-aqua: #00B2A9;
+   --color-aqua-light: #88DBDF;
+
+   /* Greens / Success */
+   --color-green-mid: #78BE20;
+   --color-green-bright: #00B140;
+   --color-green-forest: #007B4B;
+
+   /* Yellows / Warning */
+   --color-lime: #CEDC00;
+   --color-yellow: #F3E500;
+
+   /* Oranges / Alert */
+   --color-orange: #E35205;
+   --color-amber: #E57200;
+   --color-orange-light: #F9E1BE;
+
+   /* Reds / Error */
+   --color-red-dark: #8A2A2B;
+   --color-red: #AF272F;
+   --color-red-bright: #D50032;
+
+   /* Purples */
+   --color-purple-deep: #500778;
+   --color-purple: #642667;
+   --color-purple-bright: #87189D;
+
+   /* Pinks */
+   --color-pink: #C63663;
+   --color-pink-hot: #EF4A81;
+   --color-pink-soft: #E89CAE;
+
+   /* =====================
+       SEMANTIC COLOURS
+       ===================== */
+   --color-bg-primary: var(--color-white);
+   --color-bg-secondary: var(--color-grey-50);
+   --color-bg-tertiary: var(--color-grey-100);
+
+   --color-text-primary: var(--color-grey-900);
+   --color-text-secondary: var(--color-grey-600);
+   --color-text-muted: var(--color-grey-400);
+   --color-text-inverse: var(--color-white);
+
+   --color-border: var(--color-grey-200);
+   --color-border-light: var(--color-grey-100);
+   --color-border-dark: var(--color-grey-300);
+
+   --color-link: var(--color-blue-dark);
+   --color-link-hover: var(--color-blue);
+
+   /* Status semantics */
+   --color-success: var(--color-green-mid);
+   --color-success-bg: #e8f5e9;
+   --color-warning: var(--color-amber);
+   --color-warning-bg: #fff8e1;
+   --color-error: var(--color-red);
+   --color-error-bg: #ffebee;
+   --color-info: var(--color-blue);
+   --color-info-bg: #e3f2fd;
+
+   /* =====================
+       TYPOGRAPHY
+       ===================== */
+   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+   --font-family-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+
+   /* Font Sizes (using clamp for responsive) */
+   --font-size-xs: 0.75rem;
+   /* 12px */
+   --font-size-sm: 0.875rem;
+   /* 14px */
+   --font-size-base: 1rem;
+   /* 16px - minimum for accessibility */
+   --font-size-lg: 1.125rem;
+   /* 18px */
+   --font-size-xl: 1.25rem;
+   /* 20px */
+   --font-size-2xl: 1.5rem;
+   /* 24px */
+   --font-size-3xl: 1.875rem;
+   /* 30px */
+   --font-size-4xl: 2.25rem;
+   /* 36px */
+
+   /* Font Weights */
+   --font-weight-light: 300;
+   --font-weight-regular: 400;
+   --font-weight-medium: 500;
+   --font-weight-semibold: 600;
+   --font-weight-bold: 700;
+
+   /* Line Heights */
+   --line-height-tight: 1.25;
+   --line-height-normal: 1.5;
+   --line-height-relaxed: 1.75;
+
+   /* =====================
+       SPACING
+       ===================== */
+   --space-0: 0;
+   --space-1: 0.25rem;
+   /* 4px */
+   --space-2: 0.5rem;
+   /* 8px */
+   --space-3: 0.75rem;
+   /* 12px */
+   --space-4: 1rem;
+   /* 16px */
+   --space-5: 1.25rem;
+   /* 20px */
+   --space-6: 1.5rem;
+   /* 24px */
+   --space-8: 2rem;
+   /* 32px */
+   --space-10: 2.5rem;
+   /* 40px */
+   --space-12: 3rem;
+   /* 48px */
+   --space-16: 4rem;
+   /* 64px */
+   --space-20: 5rem;
+   /* 80px */
+
+   /* =====================
+       BORDERS & RADIUS
+       ===================== */
+   --border-width: 1px;
+   --border-width-thick: 2px;
+
+   --radius-sm: 0.25rem;
+   /* 4px */
+   --radius-md: 0.5rem;
+   /* 8px */
+   --radius-lg: 0.75rem;
+   /* 12px */
+   --radius-xl: 1rem;
+   /* 16px */
+   --radius-2xl: 1.5rem;
+   /* 24px */
+   --radius-full: 9999px;
+
+   /* =====================
+       SHADOWS
+       ===================== */
+   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+   --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+   --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+   --shadow-focus: 0 0 0 3px rgba(0, 87, 61, 0.3);
+   --shadow-focus-error: 0 0 0 3px rgba(175, 39, 47, 0.3);
+
+   /* =====================
+       TRANSITIONS
+       ===================== */
+   --transition-fast: 150ms ease;
+   --transition-normal: 250ms ease;
+   --transition-slow: 350ms ease;
+   --transition-bounce: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+   /* =====================
+       Z-INDEX SCALE
+       ===================== */
+   --z-dropdown: 100;
+   --z-sticky: 200;
+   --z-fixed: 300;
+   --z-modal-backdrop: 400;
+   --z-modal: 500;
+   --z-tooltip: 600;
+   --z-toast: 700;
+
+   /* =====================
+       LAYOUT
+       ===================== */
+   --header-height: 64px;
+   --sidebar-width: 260px;
+   --sidebar-width-collapsed: 72px;
+   --content-max-width: 1400px;
+}
+
+/* =====================
+   DARK MODE
+   ===================== */
+/* Manual dark mode toggle */
+:root.dark-mode {
+   --color-bg-primary: #121212;
+   --color-bg-secondary: #1e1e1e;
+   --color-bg-tertiary: #2a2a2a;
+
+   --color-text-primary: #f5f5f5;
+   --color-text-secondary: #b0b0b0;
+   --color-text-muted: #808080;
+   --color-text-inverse: #1a1a1a;
+
+   --color-border: #3a3a3a;
+   --color-border-light: #2a2a2a;
+   --color-border-dark: #4a4a4a;
+
+   --color-white: #1e1e1e;
+   --color-grey-50: #252525;
+   --color-grey-100: #2a2a2a;
+   --color-grey-200: #3a3a3a;
+
+   --color-success-bg: rgba(120, 190, 32, 0.15);
+   --color-warning-bg: rgba(229, 114, 0, 0.15);
+   --color-error-bg: rgba(175, 39, 47, 0.15);
+   --color-info-bg: rgba(0, 114, 206, 0.15);
+
+   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+   --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+}
+
+/* Dark mode body background */
+.dark-mode body {
+   background: #121212;
+}
+
+/* Dark mode login screen gradient */
+.dark-mode .login-screen {
+   background: linear-gradient(135deg, #1a1a1a 0%, #121212 50%, #0a0a0a 100%);
+}
+
+/* Dark mode cards */
+.dark-mode .card,
+.dark-mode .modal-content,
+.dark-mode .stats-card,
+.dark-mode .document-item,
+.dark-mode .audit-item {
+   background: #1e1e1e;
+   border-color: #3a3a3a;
+}
+
+/* Dark mode inputs */
+.dark-mode .form-input,
+.dark-mode .form-select,
+.dark-mode .form-textarea {
+   background: #2a2a2a;
+   border-color: #3a3a3a;
+   color: #f5f5f5;
+}
+
+.dark-mode .form-input::placeholder,
+.dark-mode .form-textarea::placeholder {
+   color: #666;
+}
+
+/* Dark mode nav */
+.dark-mode .top-nav {
+   background: linear-gradient(135deg, #1a2f1a, #0d1f0d);
+   border-color: #2a4a2a;
+}
+
+.dark-mode .side-nav {
+   background: #1a1a1a;
+   border-color: #2a2a2a;
+}
+
+.dark-mode .nav-item:hover {
+   background: rgba(255, 255, 255, 0.05);
+}
+
+/* Dark mode buttons */
+.dark-mode .btn-secondary {
+   background: #2a2a2a;
+   border-color: #3a3a3a;
+   color: #f5f5f5;
+}
+
+.dark-mode .btn-secondary:hover {
+   background: #3a3a3a;
+}
+
+.dark-mode .btn-ghost:hover {
+   background: rgba(255, 255, 255, 0.1);
+}
+
+/* Dark mode toast */
+.dark-mode .toast {
+   background: #2a2a2a;
+   border-color: #3a3a3a;
+}
+
+/* Dark mode info panel */
+.dark-mode .info-panel {
+   background: #252525;
+}
+
+/* Dark mode upload dropzone */
+.dark-mode .upload-dropzone {
+   background: #252525;
+   border-color: #3a3a3a;
+}
+
+/* Dark mode request type cards */
+.dark-mode .request-type-card {
+   background: #2a2a2a;
+   border-color: #3a3a3a;
+}
+
+.dark-mode .request-type-card.active {
+   border-color: var(--color-primary);
+   background: rgba(0, 87, 61, 0.15);
+}
+
+/* Dark search container */
+.dark-mode .search-container {
+   background: rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .search-input {
+   color: #f5f5f5;
+}
+
+.dark-mode .search-input::placeholder {
+   color: rgba(255, 255, 255, 0.5);
+}

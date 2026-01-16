@@ -1,0 +1,131 @@
+# Mission: Possible 🌏✈️
+
+> **A travel and catering operations platform for MHFA Australia**
+
+![MHFA Australia](docs/branding/MHFA%20Australia%20Horizontal%20Logo%20RGB%20copy.png)
+
+---
+
+## 🎯 Overview
+
+**Mission: Possible** is a purpose-built web application designed to streamline travel and catering request management for Mental Health First Aid (MHFA) Australia. It replaces the current manual process of email chains, phone calls, and monday.com boards with a unified, modern platform.
+
+### Why "Mission: Possible"?
+
+The name reflects our commitment to making what was once a complex, time-consuming mission — coordinating travel approvals, vendor quotes, bookings, and reconciliation — into something seamless and delightful. Every request is a "mission" that our operations team, Glenda and Amanda, can now complete with ease.
+
+---
+
+## 👥 Key Users
+
+| Role | Description | Primary Actions |
+|------|-------------|-----------------|
+| **Employee** | Any MHFA staff member requesting travel or catering | Submit requests, review options, track status |
+| **Ops Coordinator** | Glenda, Amanda — the operations heroes | Triage, coordinate, book, document |
+| **Approver** | Executive Directors, CEO | Review and approve/reject requests |
+| **Finance** | Accounts team | Reconcile invoices, generate reports |
+| **Partner** *(Phase 2)* | External vendors like Flight Centre (Mel) | View assigned requests, upload quotes |
+
+---
+
+## 🔄 The Workflow
+
+```mermaid
+stateDiagram-v2
+  [*] --> SUBMITTED: Employee submits request
+  SUBMITTED --> TRIAGE: Ops begins review
+  TRIAGE --> AWAITING_APPROVAL: Ready for approval
+  AWAITING_APPROVAL --> APPROVED: ✅ Approved
+  AWAITING_APPROVAL --> REJECTED: ❌ Rejected
+  APPROVED --> QUOTING: Ops requests vendor quotes
+  QUOTING --> OPTION_REVIEW: Options ready
+  OPTION_REVIEW --> BOOKED: Selection confirmed
+  BOOKED --> ITINERARY_SENT: Documents uploaded
+  ITINERARY_SENT --> INVOICED: Invoice received
+  INVOICED --> RECONCILED: Finance reconciles
+  RECONCILED --> CLOSED: ✨ Complete!
+```
+
+---
+
+## 📚 Architecture Decision Records (ADRs)
+
+The following ADRs document the key architectural decisions for Mission: Possible:
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| [ADR-001](docs/adr/adr-001.md) | Build a Dedicated Travel & Catering Operations Application | ✅ Accepted |
+| [ADR-002](docs/adr/adr-002.md) | Unified Request Model with Typed Extensions | ✅ Accepted |
+| [ADR-003](docs/adr/adr-003.md) | Explicit Workflow State Machine with Ownership and SLAs | ✅ Accepted |
+| [ADR-004](docs/adr/adr-004.md) | Policy-Driven Approval Routing with Delegation | ✅ Accepted |
+| [ADR-005](docs/adr/adr-005.md) | Internal-First Design with Optional External Partner Access | ✅ Accepted |
+| [ADR-006](docs/adr/adr-006.md) | Request Timeline as the Primary Communication Record | ✅ Accepted |
+| [ADR-007](docs/adr/adr-007.md) | Notification Strategy with App as Source of Truth | ✅ Accepted |
+| [ADR-008](docs/adr/adr-008.md) | Structured Document and Invoice Management | ✅ Accepted |
+| [ADR-009](docs/adr/adr-009.md) | Role-Based Access Control and Auditing | ✅ Accepted |
+| [ADR-010](docs/adr/adr-010.md) | Technology Stack and Deployment Strategy | ✅ Accepted |
+| [ADR-011](docs/adr/adr-011.md) | UI/UX Design Principles and Branding | ✅ Accepted |
+| [ADR-012](docs/adr/adr-012.md) | Emergency Support and Out-of-Band Handling | ✅ Accepted |
+
+---
+
+## 🏗️ Implementation Epics
+
+The build is organised into six progressive epics:
+
+| Epic | Focus | Key Deliverables |
+|------|-------|------------------|
+| **E1** | [Foundations & RBAC](docs/epics/epic-e1-foundations-rbac.md) | App shell, authentication, roles, audit framework |
+| **E2** | [Request Intake](docs/epics/epic-e2-request-intake.md) | Travel & catering submission forms, data model |
+| **E3** | [Workflow Engine](docs/epics/epic-e3-workflow-engine.md) | State machine, timeline, ops actions |
+| **E4** | [Approvals & Routing](docs/epics/epic-e4-approvals-routing-delegation.md) | Policy engine, delegation, approver inbox |
+| **E5** | [Quoting & Booking](docs/epics/epic-e5-quoting-review-booking.md) | Quote options, requester review, document handling |
+| **E6** | [Finance & Polish](docs/epics/epic-e6-finance-reconciliation.md) | Reconciliation, exports, notification refinement |
+
+---
+
+## 🎨 Design System
+
+Mission: Possible follows the **MHFA Australia Brand Guidelines 2024**, featuring:
+
+- **Primary Colours**: MHFA Dark Green `#00573D`, MHFA Green `#00AA52`
+- **Typography**: Clean, accessible fonts
+- **Design Ethos**: Calm, professional, reassuring — reflecting the organisation's mental health focus
+
+See [brand-colours-mhfa.md](docs/branding/brand-colours-mhfa%20copy.md) for the full colour palette.
+
+---
+
+## 📐 Domain Model
+
+```mermaid
+erDiagram
+  USER ||--o{ REQUEST : "submits"
+  REQUEST ||--|| TRAVEL_DETAILS : "has (if travel)"
+  REQUEST ||--|| CATERING_DETAILS : "has (if catering)"
+  REQUEST ||--o{ APPROVAL : "requires"
+  REQUEST ||--o{ QUOTE_OPTION : "has"
+  REQUEST ||--o{ ATTACHMENT : "has"
+  REQUEST ||--o{ TIMELINE_EVENT : "records"
+  USER ||--o{ DELEGATION : "delegates"
+```
+
+See [domain-model-diagram.md](docs/mermaid/domain-model-diagram.md) for the complete entity relationship diagram.
+
+---
+
+## 🚀 Getting Started
+
+*Coming soon: Development setup instructions*
+
+---
+
+## 📞 Support
+
+For questions about this project, contact the development team.
+
+---
+
+<div align="center">
+  <em>Making travel management a mission that's always possible.</em>
+</div>

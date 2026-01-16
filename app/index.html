@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Mission Possible Travel - Travel and Catering Operations for MHFA Australia">
+    <title>Mission Possible Travel | MHFA Australia</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/tokens.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+
+<body>
+    <!-- App Container -->
+    <div id="app" class="app-container">
+
+        <!-- Login Screen (shown when not authenticated) -->
+        <div id="login-screen" class="login-screen">
+            <div class="login-card">
+                <div class="login-header">
+                    <div class="login-logo">
+                        <svg class="logo-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="24" cy="24" r="22" stroke="currentColor" stroke-width="2" />
+                            <path d="M24 8L24 24L36 30" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                            <path d="M12 20L20 28L32 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <h1 class="login-title">Mission Possible Travel</h1>
+                    <p class="login-subtitle">MHFA Australia</p>
+                </div>
+
+                <form id="login-form" class="login-form">
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" id="email" name="email" class="form-input"
+                            placeholder="your.name@mhfa.com.au" required autocomplete="email">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" id="password" name="password" class="form-input" placeholder="••••••••"
+                            required autocomplete="current-password">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-full">
+                        <span>Sign In</span>
+                        <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </form>
+
+                <div class="login-demo">
+                    <p class="demo-text">Demo accounts:</p>
+                    <div class="demo-users">
+                        <button class="demo-user-btn" data-email="glenda@mhfa.com.au" data-role="ops">
+                            <span class="demo-avatar">G</span>
+                            <span class="demo-name">Glenda (Ops)</span>
+                        </button>
+                        <button class="demo-user-btn" data-email="amanda@mhfa.com.au" data-role="ops">
+                            <span class="demo-avatar">A</span>
+                            <span class="demo-name">Amanda (Ops)</span>
+                        </button>
+                        <button class="demo-user-btn" data-email="sarah@mhfa.com.au" data-role="employee">
+                            <span class="demo-avatar">S</span>
+                            <span class="demo-name">Sarah (Staff)</span>
+                        </button>
+                        <button class="demo-user-btn" data-email="director@mhfa.com.au" data-role="approver">
+                            <span class="demo-avatar">D</span>
+                            <span class="demo-name">David (Director)</span>
+                        </button>
+                        <button class="demo-user-btn" data-email="mel@fcct.com.au" data-role="vendor">
+                            <span class="demo-avatar">M</span>
+                            <span class="demo-name">Mel (Vendor)</span>
+                        </button>
+                        <button class="demo-user-btn" data-email="admin@mhfa.com.au" data-role="admin">
+                            <span class="demo-avatar"
+                                style="background: linear-gradient(135deg, #8A2A2B, #AF272F);">⚙</span>
+                            <span class="demo-name">Admin</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="login-footer">
+                    <img src="assets/mhfa-logo.svg" alt="MHFA Australia" class="mhfa-logo">
+                </div>
+            </div>
+        </div>
+
+        <!-- Main App (shown when authenticated) -->
+        <div id="main-app" class="main-app hidden">
+
+            <!-- Top Navigation -->
+            <header class="top-nav">
+                <div class="top-nav-left">
+                    <button id="mobile-menu-toggle" class="mobile-menu-btn" aria-label="Toggle menu">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                    <a href="#" class="top-nav-brand">
+                        <svg class="brand-icon" viewBox="0 0 32 32" fill="none">
+                            <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="1.5" />
+                            <path d="M8 14L14 20L24 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                        <span class="brand-text">Mission Possible Travel</span>
+                    </a>
+                </div>
+
+                <div class="top-nav-center">
+                    <div class="search-container">
+                        <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        <input type="search" class="search-input" placeholder="Search by Event name or Requester"
+                            aria-label="Search">
+                    </div>
+                </div>
+
+                <div class="top-nav-right">
+                    <button class="nav-icon-btn" aria-label="Notifications" id="notifications-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" />
+                        </svg>
+                        <span class="notification-badge">3</span>
+                    </button>
+
+                    <button class="nav-icon-btn" aria-label="Help">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01" />
+                        </svg>
+                    </button>
+
+                    <!-- Dark Mode Toggle -->
+                    <button id="dark-mode-toggle" class="nav-icon-btn dark-toggle" aria-label="Toggle dark mode"
+                        title="Toggle dark mode">
+                        <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="5" />
+                            <line x1="12" y1="1" x2="12" y2="3" />
+                            <line x1="12" y1="21" x2="12" y2="23" />
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                            <line x1="1" y1="12" x2="3" y2="12" />
+                            <line x1="21" y1="12" x2="23" y2="12" />
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                        </svg>
+                        <svg class="moon-icon" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+                            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+                        </svg>
+                    </button>
+
+                    <div class="user-menu">
+                        <button id="user-menu-toggle" class="user-menu-btn" aria-haspopup="true" aria-expanded="false">
+                            <span class="user-avatar" id="user-avatar">G</span>
+                            <span class="user-name" id="user-name">Glenda</span>
+                            <svg class="dropdown-icon" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <div id="user-dropdown" class="user-dropdown hidden">
+                            <div class="dropdown-header">
+                                <span class="dropdown-email" id="user-email">glenda@mhfa.com.au</span>
+                                <span class="dropdown-role" id="user-role-badge">Ops Coordinator</span>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" class="dropdown-item" data-action="profile"
+                                onclick="navigateTo('my-profile'); return false;">
+                                <svg viewBox="0 0 20 20" fill="currentColor">
+                                    <path
+                                        d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z" />
+                                </svg>
+                                My Profile
+                            </a>
+                            <a href="#" class="dropdown-item" data-action="settings">
+                                <svg viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M7.84 1.804A1 1 0 018.82 1h2.36a1 1 0 01.98.804l.331 1.652a6.993 6.993 0 011.929 1.115l1.598-.54a1 1 0 011.186.447l1.18 2.044a1 1 0 01-.205 1.251l-1.267 1.113a7.047 7.047 0 010 2.228l1.267 1.113a1 1 0 01.206 1.25l-1.18 2.045a1 1 0 01-1.187.447l-1.598-.54a6.993 6.993 0 01-1.929 1.115l-.33 1.652a1 1 0 01-.98.804H8.82a1 1 0 01-.98-.804l-.331-1.652a6.993 6.993 0 01-1.929-1.115l-1.598.54a1 1 0 01-1.186-.447l-1.18-2.044a1 1 0 01.205-1.251l1.267-1.114a7.05 7.05 0 010-2.227L1.821 7.773a1 1 0 01-.206-1.25l1.18-2.045a1 1 0 011.187-.447l1.598.54A6.993 6.993 0 017.51 3.456l.33-1.652zM10 13a3 3 0 100-6 3 3 0 000 6z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                Settings
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" class="dropdown-item dropdown-item-danger" data-action="logout">
+                                <svg viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M3 4.25A2.25 2.25 0 015.25 2h5.5A2.25 2.25 0 0113 4.25v2a.75.75 0 01-1.5 0v-2a.75.75 0 00-.75-.75h-5.5a.75.75 0 00-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 00.75-.75v-2a.75.75 0 011.5 0v2A2.25 2.25 0 0110.75 18h-5.5A2.25 2.25 0 013 15.75V4.25z"
+                                        clip-rule="evenodd" />
+                                    <path fill-rule="evenodd"
+                                        d="M6 10a.75.75 0 01.75-.75h9.546l-1.048-.943a.75.75 0 111.004-1.114l2.5 2.25a.75.75 0 010 1.114l-2.5 2.25a.75.75 0 11-1.004-1.114l1.048-.943H6.75A.75.75 0 016 10z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                Sign Out
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content Area -->
+            <div class="app-body">
+
+                <!-- Side Navigation -->
+                <nav id="side-nav" class="side-nav">
+                    <div class="side-nav-content">
+
+                        <!-- Main Menu -->
+                        <div class="nav-section">
+                            <a href="#" class="nav-item active" data-page="dashboard">
+                                <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                <span class="nav-label">Dashboard</span>
+                            </a>
+
+                            <a href="#" class="nav-item" data-page="my-requests">
+                                <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm3 1h6v4H7V5zm6 6H7v2h6v-2z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                <span class="nav-label">My Requests</span>
+                            </a>
+                        </div>
+
+                        <!-- Ops Menu (role-based) -->
+                        <div class="nav-section" id="ops-menu">
+                            <div class="nav-section-title">Operations</div>
+
+                            <a href="#" class="nav-item" data-page="all-requests">
+                                <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M2 3a1 1 0 00-1 1v1a1 1 0 001 1h16a1 1 0 001-1V4a1 1 0 00-1-1H2zM2 7.5h16l-.811 7.71a2 2 0 01-1.99 1.79H4.802a2 2 0 01-1.99-1.79L2 7.5z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                <span class="nav-label">All Requests</span>
+                            </a>
+                        </div>
+
+
+
+                        <!-- Finance Menu (role-based) -->
+                        <div class="nav-section hidden" id="finance-menu">
+                            <div class="nav-section-title">Finance</div>
+
+                            <a href="#" class="nav-item" data-page="invoices">
+                                <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor">
+                                    <path
+                                        d="M1 4.25a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0119 4.25v10.5A2.25 2.25 0 0116.75 17H3.25A2.25 2.25 0 011 14.75V4.25zM3.25 5.5a.75.75 0 000 1.5h13.5a.75.75 0 000-1.5H3.25zM3 10.75A.75.75 0 013.75 10h4.5a.75.75 0 010 1.5h-4.5a.75.75 0 01-.75-.75z" />
+                                </svg>
+                                <span class="nav-label">Invoices</span>
+                            </a>
+
+                            <a href="#" class="nav-item" data-page="reports">
+                                <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor">
+                                    <path
+                                        d="M15.5 2A1.5 1.5 0 0014 3.5v13a1.5 1.5 0 001.5 1.5h1a1.5 1.5 0 001.5-1.5v-13A1.5 1.5 0 0016.5 2h-1zM9.5 6A1.5 1.5 0 008 7.5v9A1.5 1.5 0 009.5 18h1a1.5 1.5 0 001.5-1.5v-9A1.5 1.5 0 0010.5 6h-1zM3.5 10A1.5 1.5 0 002 11.5v5A1.5 1.5 0 003.5 18h1A1.5 1.5 0 006 16.5v-5A1.5 1.5 0 004.5 10h-1z" />
+                                </svg>
+                                <span class="nav-label">Reports</span>
+                            </a>
+                        </div>
+
+                        <!-- Admin Menu (role-based) -->
+                        <div class="nav-section hidden" id="admin-menu">
+                            <div class="nav-section-title">Administration</div>
+
+                            <a href="#" class="nav-item" data-page="user-management">
+                                <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor">
+                                    <path
+                                        d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z" />
+                                </svg>
+                                <span class="nav-label">User Management</span>
+                            </a>
+
+                            <a href="#" class="nav-item" data-page="audit-log">
+                                <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                <span class="nav-label">Audit Log</span>
+                            </a>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="nav-section">
+                            <div class="nav-section-title">Quick Actions</div>
+
+                            <button class="nav-action-btn" id="new-request-btn">
+                                <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor">
+                                    <path
+                                        d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
+                                </svg>
+                                <span class="nav-label">New Request</span>
+                            </button>
+                        </div>
+
+                    </div>
+
+                </nav>
+
+                <!-- Page Content -->
+                <main id="page-content" class="page-content">
+                    <!-- Dynamic content loaded here -->
+                </main>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- New Request Modal -->
+    <div id="new-request-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-container">
+            <div class="modal-content modal-lg">
+                <div class="modal-header">
+                    <h2 class="modal-title">New Request</h2>
+                    <button class="modal-close-btn" aria-label="Close">
+                        <svg viewBox="0 0 20 20" fill="currentColor">
+                            <path
+                                d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="request-type-selector">
+                        <button class="request-type-card active" data-type="travel">
+                            <div class="type-icon travel">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 16v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2" />
+                                    <path d="M3 8l2.5-4h13L21 8" />
+                                    <path d="M12 16v5" />
+                                    <circle cx="6.5" cy="16.5" r="2.5" />
+                                    <circle cx="17.5" cy="16.5" r="2.5" />
+                                </svg>
+                            </div>
+                            <h3 class="type-title">Travel</h3>
+                            <p class="type-desc">Flights, accommodation, car rental</p>
+                        </button>
+
+                        <button class="request-type-card" data-type="catering">
+                            <div class="type-icon catering">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M18 8h1a4 4 0 010 8h-1" />
+                                    <path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z" />
+                                    <path d="M6 1v3" />
+                                    <path d="M10 1v3" />
+                                    <path d="M14 1v3" />
+                                </svg>
+                            </div>
+                            <h3 class="type-title">Catering</h3>
+                            <p class="type-desc">Events, meetings, conferences</p>
+                        </button>
+                    </div>
+
+                    <!-- Travel Form -->
+                    <form id="travel-form" class="request-form">
+                        <div class="form-section">
+                            <h3 class="form-section-title">Trip Details</h3>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="travel-origin" class="form-label">Departing From</label>
+                                    <input type="text" id="travel-origin" class="form-input"
+                                        placeholder="e.g. Melbourne" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="travel-destination" class="form-label">Destination</label>
+                                    <input type="text" id="travel-destination" class="form-input"
+                                        placeholder="e.g. Sydney" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="travel-start" class="form-label">Departure Date</label>
+                                    <input type="date" id="travel-start" class="form-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="travel-end" class="form-label">Return Date</label>
+                                    <input type="date" id="travel-end" class="form-input" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="travel-travellers" class="form-label">Number of Travellers</label>
+                                    <input type="number" id="travel-travellers" class="form-input" value="1" min="1"
+                                        max="50" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="travel-estimate" class="form-label">Estimated Cost ($)</label>
+                                    <input type="number" id="travel-estimate" class="form-input" placeholder="0.00"
+                                        min="0" step="0.01">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3 class="form-section-title">Business Details</h3>
+
+                            <div class="form-group">
+                                <label for="travel-purpose" class="form-label">Business Purpose</label>
+                                <textarea id="travel-purpose" class="form-textarea" rows="3"
+                                    placeholder="Why is this travel required?" required></textarea>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="travel-costcentre" class="form-label">Cost Centre</label>
+                                    <select id="travel-costcentre" class="form-select" required>
+                                        <option value="">Select cost centre...</option>
+                                        <option value="training">Training & Development</option>
+                                        <option value="marketing">Marketing & Communications</option>
+                                        <option value="operations">Operations</option>
+                                        <option value="executive">Executive Office</option>
+                                        <option value="research">Research</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="travel-directorate" class="form-label">Directorate</label>
+                                    <select id="travel-directorate" class="form-select" required>
+                                        <option value="">Select directorate...</option>
+                                        <option value="programs">Programs</option>
+                                        <option value="corporate">Corporate Services</option>
+                                        <option value="ceo">CEO Office</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3 class="form-section-title">Preferences (Optional)</h3>
+
+                            <div class="form-group">
+                                <label for="travel-preferences" class="form-label">Flight/Accommodation
+                                    Preferences</label>
+                                <textarea id="travel-preferences" class="form-textarea" rows="2"
+                                    placeholder="e.g. Window seat, early flight, specific hotel..."></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="travel-notes" class="form-label">Additional Notes</label>
+                                <textarea id="travel-notes" class="form-textarea" rows="2"
+                                    placeholder="Any other information..."></textarea>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Catering Form (hidden by default) -->
+                    <form id="catering-form" class="request-form hidden">
+                        <div class="form-section">
+                            <h3 class="form-section-title">Event Details</h3>
+
+                            <div class="form-group">
+                                <label for="catering-event" class="form-label">Event Name/Type</label>
+                                <input type="text" id="catering-event" class="form-input"
+                                    placeholder="e.g. Team Planning Day" required>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="catering-date" class="form-label">Event Date</label>
+                                    <input type="date" id="catering-date" class="form-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="catering-time" class="form-label">Event Time</label>
+                                    <input type="time" id="catering-time" class="form-input" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="catering-location" class="form-label">Location</label>
+                                    <input type="text" id="catering-location" class="form-input"
+                                        placeholder="e.g. MHFA Office, Level 3" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="catering-attendees" class="form-label">Number of Attendees</label>
+                                    <input type="number" id="catering-attendees" class="form-input" value="10" min="1"
+                                        max="200" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3 class="form-section-title">Catering Requirements</h3>
+
+                            <div class="form-group">
+                                <label class="form-label">Meal Type</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="meal-type" value="breakfast">
+                                        <span>Breakfast</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="meal-type" value="morning-tea">
+                                        <span>Morning Tea</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="meal-type" value="lunch">
+                                        <span>Lunch</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="meal-type" value="afternoon-tea">
+                                        <span>Afternoon Tea</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="meal-type" value="dinner">
+                                        <span>Dinner</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="catering-dietary" class="form-label">Dietary Requirements</label>
+                                <textarea id="catering-dietary" class="form-textarea" rows="2"
+                                    placeholder="e.g. 2 vegetarian, 1 gluten-free, 1 halal..."></textarea>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="catering-costcentre" class="form-label">Cost Centre</label>
+                                    <select id="catering-costcentre" class="form-select" required>
+                                        <option value="">Select cost centre...</option>
+                                        <option value="training">Training & Development</option>
+                                        <option value="marketing">Marketing & Communications</option>
+                                        <option value="operations">Operations</option>
+                                        <option value="executive">Executive Office</option>
+                                        <option value="research">Research</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="catering-estimate" class="form-label">Estimated Cost ($)</label>
+                                    <input type="number" id="catering-estimate" class="form-input" placeholder="0.00"
+                                        min="0" step="0.01">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3 class="form-section-title">Additional Information</h3>
+
+                            <div class="form-group">
+                                <label for="catering-instructions" class="form-label">Special Instructions</label>
+                                <textarea id="catering-instructions" class="form-textarea" rows="2"
+                                    placeholder="Any additional requirements or instructions..."></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancel-request-btn">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="submit-request-btn">
+                        <svg class="btn-icon-left" viewBox="0 0 20 20" fill="currentColor">
+                            <path
+                                d="M3.105 2.289a.75.75 0 00-.826.95l1.414 4.925A1.5 1.5 0 005.135 9.25h6.115a.75.75 0 010 1.5H5.135a1.5 1.5 0 00-1.442 1.086l-1.414 4.926a.75.75 0 00.826.95 28.896 28.896 0 0015.293-7.154.75.75 0 000-1.115A28.897 28.897 0 003.105 2.289z" />
+                        </svg>
+                        Submit Request
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="js/rbac.js"></script>
+    <script src="js/documents.js"></script>
+    <script src="js/users.js"></script>
+    <script src="js/invoice-store.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
