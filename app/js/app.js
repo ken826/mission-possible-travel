@@ -24,14 +24,8 @@ const DEMO_USERS = {
     'admin@mhfa.com.au': { id: '6', name: 'Admin', email: 'admin@mhfa.com.au', role: 'ADMIN', avatar: '⚙' }
 };
 
-// Sample requests data
-const SAMPLE_REQUESTS = [
-    { id: 'REQ-2026-001', type: 'TRAVEL', status: 'AWAITING_APPROVAL', title: 'Sydney Conference - Feb 2026', requester: 'Sarah', destination: 'Sydney', dates: '10-12 Feb 2026', estimate: 1850, created: '2026-01-14' },
-    { id: 'REQ-2026-002', type: 'CATERING', status: 'SUBMITTED', title: 'Team Planning Day Lunch', requester: 'Michael', location: 'MHFA Office', attendees: 25, estimate: 625, created: '2026-01-15' },
-    { id: 'REQ-2026-003', type: 'TRAVEL', status: 'QUOTING', title: 'Perth Training Delivery', requester: 'Emma', destination: 'Perth', dates: '20-22 Feb 2026', estimate: 2400, created: '2026-01-12' },
-    { id: 'REQ-2026-004', type: 'TRAVEL', status: 'BOOKED', title: 'Brisbane Workshop', requester: 'James', destination: 'Brisbane', dates: '5-6 Feb 2026', estimate: 980, created: '2026-01-08' },
-    { id: 'REQ-2026-005', type: 'CATERING', status: 'APPROVED', title: 'Board Meeting Catering', requester: 'Amanda', location: 'Board Room', attendees: 12, estimate: 360, created: '2026-01-13' }
-];
+// Unsubscribe function for real-time listener
+let unsubscribeRequests = null;
 
 // =====================
 // INITIALIZATION
@@ -40,8 +34,45 @@ document.addEventListener('DOMContentLoaded', () => {
     initApp();
 });
 
-function initApp() {
-    AppState.requests = SAMPLE_REQUESTS;
+async function initApp() {
+    // Show loading state
+    AppState.isLoading = true;
+
+    // Initialize requests from Firestore (or fallback to sample data)
+    try {
+        if (window.RequestService) {
+            // Initialize sample data if Firestore is empty
+            await window.RequestService.initializeSampleData();
+
+            // Load initial data
+            AppState.requests = await window.RequestService.getAll();
+
+            // Subscribe to real-time updates
+            unsubscribeRequests = window.RequestService.subscribeToChanges((requests) => {
+                AppState.requests = requests;
+                // Re-render current page if authenticated
+                if (AppState.isAuthenticated) {
+                    navigateTo(AppState.currentPage);
+                }
+            });
+        } else {
+            // Fallback to sample data if service not available
+            console.warn('RequestService not available, using sample data');
+            AppState.requests = [
+                { id: 'REQ-2026-001', type: 'TRAVEL', status: 'AWAITING_APPROVAL', title: 'Sydney Conference - Feb 2026', requester: 'Sarah', destination: 'Sydney', dates: '10-12 Feb 2026', estimate: 1850, created: '2026-01-14' },
+                { id: 'REQ-2026-002', type: 'CATERING', status: 'SUBMITTED', title: 'Team Planning Day Lunch', requester: 'Michael', location: 'MHFA Office', attendees: 25, estimate: 625, created: '2026-01-15' },
+                { id: 'REQ-2026-003', type: 'TRAVEL', status: 'QUOTING', title: 'Perth Training Delivery', requester: 'Emma', destination: 'Perth', dates: '20-22 Feb 2026', estimate: 2400, created: '2026-01-12' },
+                { id: 'REQ-2026-004', type: 'TRAVEL', status: 'BOOKED', title: 'Brisbane Workshop', requester: 'James', destination: 'Brisbane', dates: '5-6 Feb 2026', estimate: 980, created: '2026-01-08' },
+                { id: 'REQ-2026-005', type: 'CATERING', status: 'APPROVED', title: 'Board Meeting Catering', requester: 'Amanda', location: 'Board Room', attendees: 12, estimate: 360, created: '2026-01-13' }
+            ];
+        }
+    } catch (error) {
+        console.error('Error initializing requests:', error);
+        // Fallback to empty array on error
+        AppState.requests = [];
+    }
+
+    AppState.isLoading = false;
     setupEventListeners();
     checkAuthState();
 }
@@ -987,24 +1018,73 @@ function selectRequestType(type) {
     document.getElementById('catering-form').classList.toggle('hidden', type !== 'catering');
 }
 
-function submitRequest() {
+async function submitRequest() {
     const activeType = document.querySelector('.request-type-card.active')?.dataset.type || 'travel';
-    const newRequest = {
-        id: `REQ-2026-${String(AppState.requests.length + 1).padStart(3, '0')}`,
+
+    // Build request data based on type
+    const requestData = {
         type: activeType.toUpperCase(),
-        status: 'SUBMITTED',
-        title: activeType === 'travel'
-            ? `${document.getElementById('travel-destination')?.value || 'Trip'} - ${document.getElementById('travel-start')?.value || 'TBD'}`
-            : document.getElementById('catering-event')?.value || 'Catering Request',
         requester: AppState.currentUser?.name || 'Unknown',
-        estimate: parseFloat(document.getElementById(activeType === 'travel' ? 'travel-estimate' : 'catering-estimate')?.value) || 0,
-        created: new Date().toISOString().split('T')[0]
+        requesterEmail: AppState.currentUser?.email || '',
     };
 
-    AppState.requests.unshift(newRequest);
-    closeModal();
-    navigateTo(AppState.currentPage);
-    showToast('success', 'Request submitted!', `${newRequest.id} has been created and sent for processing.`);
+    if (activeType === 'travel') {
+        requestData.title = `${document.getElementById('travel-destination')?.value || 'Trip'} - ${document.getElementById('travel-start')?.value || 'TBD'}`;
+        requestData.origin = document.getElementById('travel-origin')?.value || '';
+        requestData.destination = document.getElementById('travel-destination')?.value || '';
+        requestData.dates = `${document.getElementById('travel-start')?.value} - ${document.getElementById('travel-end')?.value}`;
+        requestData.travellers = parseInt(document.getElementById('travel-travellers')?.value) || 1;
+        requestData.estimate = parseFloat(document.getElementById('travel-estimate')?.value) || 0;
+        requestData.purpose = document.getElementById('travel-purpose')?.value || '';
+        requestData.costCentre = document.getElementById('travel-costcentre')?.value || '';
+        requestData.directorate = document.getElementById('travel-directorate')?.value || '';
+        requestData.preferences = document.getElementById('travel-preferences')?.value || '';
+        requestData.notes = document.getElementById('travel-notes')?.value || '';
+    } else {
+        requestData.title = document.getElementById('catering-event')?.value || 'Catering Request';
+        requestData.eventDate = document.getElementById('catering-date')?.value || '';
+        requestData.eventTime = document.getElementById('catering-time')?.value || '';
+        requestData.location = document.getElementById('catering-location')?.value || '';
+        requestData.attendees = parseInt(document.getElementById('catering-attendees')?.value) || 10;
+        requestData.estimate = parseFloat(document.getElementById('catering-estimate')?.value) || 0;
+        requestData.costCentre = document.getElementById('catering-costcentre')?.value || '';
+        requestData.dietary = document.getElementById('catering-dietary')?.value || '';
+        requestData.instructions = document.getElementById('catering-instructions')?.value || '';
+        // Get selected meal types
+        const mealTypes = [];
+        document.querySelectorAll('input[name="meal-type"]:checked').forEach(cb => {
+            mealTypes.push(cb.value);
+        });
+        requestData.mealTypes = mealTypes;
+    }
+
+    try {
+        let newRequest;
+        if (window.RequestService) {
+            // Save to Firestore
+            newRequest = await window.RequestService.create(requestData);
+        } else {
+            // Fallback: add to local state only
+            newRequest = {
+                ...requestData,
+                id: `REQ-2026-${String(AppState.requests.length + 1).padStart(3, '0')}`,
+                status: 'SUBMITTED',
+                created: new Date().toISOString()
+            };
+            AppState.requests.unshift(newRequest);
+        }
+
+        closeModal();
+        // Reset form
+        document.getElementById('travel-form')?.reset();
+        document.getElementById('catering-form')?.reset();
+
+        navigateTo(AppState.currentPage);
+        showToast('success', 'Request submitted!', `${newRequest.id} has been created and sent for processing.`);
+    } catch (error) {
+        console.error('Error submitting request:', error);
+        showToast('error', 'Submission failed', 'Unable to submit request. Please try again.');
+    }
 }
 
 // =====================
@@ -1027,21 +1107,39 @@ function toggleMobileMenu() {
     document.getElementById('side-nav')?.classList.toggle('open');
 }
 
-function handleApprove(id) {
+async function handleApprove(id) {
     const req = AppState.requests.find(r => r.id === id);
     if (req) {
-        req.status = 'APPROVED';
-        navigateTo(AppState.currentPage);
-        showToast('success', 'Request approved', `${id} has been approved and sent to Ops for processing.`);
+        try {
+            if (window.RequestService) {
+                await window.RequestService.update(id, { status: 'APPROVED' });
+            } else {
+                req.status = 'APPROVED';
+            }
+            navigateTo(AppState.currentPage);
+            showToast('success', 'Request approved', `${id} has been approved and sent to Ops for processing.`);
+        } catch (error) {
+            console.error('Error approving request:', error);
+            showToast('error', 'Approval failed', 'Unable to approve request. Please try again.');
+        }
     }
 }
 
-function handleReject(id) {
+async function handleReject(id) {
     const req = AppState.requests.find(r => r.id === id);
     if (req) {
-        req.status = 'REJECTED';
-        navigateTo(AppState.currentPage);
-        showToast('info', 'Request rejected', `${id} has been rejected.`);
+        try {
+            if (window.RequestService) {
+                await window.RequestService.update(id, { status: 'REJECTED' });
+            } else {
+                req.status = 'REJECTED';
+            }
+            navigateTo(AppState.currentPage);
+            showToast('info', 'Request rejected', `${id} has been rejected.`);
+        } catch (error) {
+            console.error('Error rejecting request:', error);
+            showToast('error', 'Rejection failed', 'Unable to reject request. Please try again.');
+        }
     }
 }
 
