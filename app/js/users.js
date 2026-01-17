@@ -1,34 +1,134 @@
 /**
  * Mission Possible Travel - User Management System
  * Admin user management with role assignment and account control
+ * Now with Firestore persistence for cross-device sync
  */
 
 // =====================
-// USER STORE
+// USER STORE (Firestore-backed)
 // =====================
 const UserStore = {
     users: [],
+    collectionName: 'users',
+    isInitialized: false,
+    unsubscribe: null,
 
-    init() {
-        // Load users from localStorage or use defaults
+    // Default users for initial setup
+    getDefaultUsers() {
+        return [
+            { id: '1', name: 'Glenda', email: 'glenda@mhfa.com.au', password: 'demo123', role: 'COORDINATOR', status: 'active', created: '2025-01-01' },
+            { id: '2', name: 'Amanda', email: 'amanda@mhfa.com.au', password: 'demo123', role: 'COORDINATOR', status: 'active', created: '2025-01-01' },
+            { id: '3', name: 'Sarah', email: 'sarah@mhfa.com.au', password: 'demo123', role: 'EMPLOYEE', status: 'active', created: '2025-06-15' },
+            { id: '4', name: 'David', email: 'director@mhfa.com.au', password: 'demo123', role: 'APPROVER', status: 'active', created: '2025-01-01' },
+            { id: '5', name: 'Mel', email: 'mel@fcct.com.au', password: 'demo123', role: 'VENDOR', status: 'active', company: 'Flight Centre Corporate Travel', created: '2025-03-01' },
+            { id: '6', name: 'Admin', email: 'admin@mhfa.com.au', password: 'admin123', role: 'ADMIN', status: 'active', created: '2025-01-01' }
+        ];
+    },
+
+    async init() {
+        if (this.isInitialized) return;
+
+        // Try Firestore first
+        if (window.FirebaseDB) {
+            try {
+                // Check if users collection exists and has data
+                const snapshot = await window.FirebaseDB
+                    .collection(this.collectionName)
+                    .limit(1)
+                    .get();
+
+                // If empty, initialize with default users
+                if (snapshot.empty) {
+                    console.log('Initializing default users in Firestore...');
+                    const defaultUsers = this.getDefaultUsers();
+                    const batch = window.FirebaseDB.batch();
+
+                    for (const user of defaultUsers) {
+                        const docRef = window.FirebaseDB.collection(this.collectionName).doc(user.id);
+                        batch.set(docRef, user);
+                    }
+
+                    await batch.commit();
+                    console.log('Default users initialized in Firestore');
+                }
+
+                // Load all users
+                await this.loadFromFirestore();
+
+                // Subscribe to real-time updates
+                this.subscribeToChanges();
+
+                this.isInitialized = true;
+                console.log('UserStore initialized with Firestore');
+                return;
+            } catch (error) {
+                console.error('Firestore init error, falling back to localStorage:', error);
+            }
+        }
+
+        // Fallback to localStorage
+        this.loadFromLocalStorage();
+        this.isInitialized = true;
+        console.log('UserStore initialized with localStorage (fallback)');
+    },
+
+    async loadFromFirestore() {
+        if (!window.FirebaseDB) return;
+
+        try {
+            const snapshot = await window.FirebaseDB
+                .collection(this.collectionName)
+                .orderBy('created', 'desc')
+                .get();
+
+            this.users = snapshot.docs.map(doc => ({
+                ...doc.data(),
+                _docId: doc.id
+            }));
+        } catch (error) {
+            console.error('Error loading users from Firestore:', error);
+        }
+    },
+
+    loadFromLocalStorage() {
         const saved = localStorage.getItem('mptUsers');
         if (saved) {
             this.users = JSON.parse(saved);
         } else {
-            this.users = [
-                { id: '1', name: 'Glenda', email: 'glenda@mhfa.com.au', password: 'demo123', role: 'COORDINATOR', status: 'active', created: '2025-01-01' },
-                { id: '2', name: 'Amanda', email: 'amanda@mhfa.com.au', password: 'demo123', role: 'COORDINATOR', status: 'active', created: '2025-01-01' },
-                { id: '3', name: 'Sarah', email: 'sarah@mhfa.com.au', password: 'demo123', role: 'EMPLOYEE', status: 'active', created: '2025-06-15' },
-                { id: '4', name: 'David', email: 'director@mhfa.com.au', password: 'demo123', role: 'APPROVER', status: 'active', created: '2025-01-01' },
-                { id: '5', name: 'Mel', email: 'mel@fcct.com.au', password: 'demo123', role: 'VENDOR', status: 'active', company: 'Flight Centre Corporate Travel', created: '2025-03-01' },
-                { id: '6', name: 'Admin', email: 'admin@mhfa.com.au', password: 'admin123', role: 'ADMIN', status: 'active', created: '2025-01-01' }
-            ];
-            this.save();
+            this.users = this.getDefaultUsers();
+            this.saveToLocalStorage();
         }
     },
 
-    save() {
+    subscribeToChanges() {
+        if (!window.FirebaseDB) return;
+
+        this.unsubscribe = window.FirebaseDB
+            .collection(this.collectionName)
+            .onSnapshot(
+                (snapshot) => {
+                    this.users = snapshot.docs.map(doc => ({
+                        ...doc.data(),
+                        _docId: doc.id
+                    }));
+                    // Refresh UI if on user management page
+                    if (window.AppState?.currentPage === 'user-management') {
+                        window.navigateTo?.('user-management');
+                    }
+                },
+                (error) => {
+                    console.error('Error in users real-time listener:', error);
+                }
+            );
+    },
+
+    saveToLocalStorage() {
         localStorage.setItem('mptUsers', JSON.stringify(this.users));
+    },
+
+    // Deprecated - kept for backward compatibility
+    save() {
+        this.saveToLocalStorage();
     },
 
     getAll() {
@@ -36,22 +136,40 @@ const UserStore = {
     },
 
     getById(id) {
-        return this.users.find(u => u.id === id);
+        return this.users.find(u => u.id === id || u._docId === id);
     },
 
     getByEmail(email) {
         return this.users.find(u => u.email.toLowerCase() === email.toLowerCase());
     },
 
-    create(userData) {
+    async create(userData) {
         const newUser = {
-            id: String(this.users.length + 1 + Date.now()),
+            id: String(Date.now()),
             ...userData,
             status: 'active',
             created: new Date().toISOString().split('T')[0]
         };
-        this.users.push(newUser);
-        this.save();
+
+        if (window.FirebaseDB) {
+            try {
+                const docRef = await window.FirebaseDB
+                    .collection(this.collectionName)
+                    .doc(newUser.id)
+                    .set(newUser);
+
+                // Reload to get the document
+                await this.loadFromFirestore();
+            } catch (error) {
+                console.error('Error creating user in Firestore:', error);
+                // Fallback to local
+                this.users.push(newUser);
+                this.saveToLocalStorage();
+            }
+        } else {
+            this.users.push(newUser);
+            this.saveToLocalStorage();
+        }
 
         if (typeof AuditLog !== 'undefined') {
             AuditLog.log('USER_CREATED', { userId: newUser.id, email: newUser.email, role: newUser.role });
@@ -60,13 +178,27 @@ const UserStore = {
         return newUser;
     },
 
-    update(id, updates) {
+    async update(id, updates) {
         const user = this.getById(id);
         if (!user) return null;
 
         const oldRole = user.role;
-        Object.assign(user, updates);
-        this.save();
+
+        if (window.FirebaseDB) {
+            try {
+                await window.FirebaseDB
+                    .collection(this.collectionName)
+                    .doc(user.id || user._docId)
+                    .update(updates);
+            } catch (error) {
+                console.error('Error updating user in Firestore:', error);
+                Object.assign(user, updates);
+                this.saveToLocalStorage();
+            }
+        } else {
+            Object.assign(user, updates);
+            this.saveToLocalStorage();
+        }
 
         if (typeof AuditLog !== 'undefined' && updates.role && updates.role !== oldRole) {
             AuditLog.log('USER_ROLE_CHANGED', { userId: id, oldRole, newRole: updates.role });
@@ -75,12 +207,11 @@ const UserStore = {
         return user;
     },
 
-    suspend(id) {
+    async suspend(id) {
         const user = this.getById(id);
         if (!user) return false;
 
-        user.status = 'suspended';
-        this.save();
+        await this.update(id, { status: 'suspended' });
 
         if (typeof AuditLog !== 'undefined') {
             AuditLog.log('USER_SUSPENDED', { userId: id, email: user.email });
@@ -89,12 +220,11 @@ const UserStore = {
         return true;
     },
 
-    activate(id) {
+    async activate(id) {
         const user = this.getById(id);
         if (!user) return false;
 
-        user.status = 'active';
-        this.save();
+        await this.update(id, { status: 'active' });
 
         if (typeof AuditLog !== 'undefined') {
             AuditLog.log('USER_ACTIVATED', { userId: id, email: user.email });
@@ -103,12 +233,11 @@ const UserStore = {
         return true;
     },
 
-    resetPassword(id, newPassword) {
+    async resetPassword(id, newPassword) {
         const user = this.getById(id);
         if (!user) return false;
 
-        user.password = newPassword;
-        this.save();
+        await this.update(id, { password: newPassword });
 
         if (typeof AuditLog !== 'undefined') {
             AuditLog.log('PASSWORD_RESET', { userId: id, email: user.email });
@@ -309,7 +438,7 @@ function closeUserModal() {
     document.body.style.overflow = '';
 }
 
-function saveUser() {
+async function saveUser() {
     const id = document.getElementById('user-id').value;
     const name = document.getElementById('user-name-input').value;
     const email = document.getElementById('user-email-input').value;
@@ -321,51 +450,71 @@ function saveUser() {
         return;
     }
 
-    if (id) {
-        // Update existing user
-        UserStore.update(id, { name, email, role });
-        showToast('success', 'User Updated', `${name}'s account has been updated.`);
-    } else {
-        // Create new user
-        if (!password) {
-            showToast('error', 'Validation Error', 'Password is required for new users.');
-            return;
+    try {
+        if (id) {
+            // Update existing user
+            await UserStore.update(id, { name, email, role });
+            showToast('success', 'User Updated', `${name}'s account has been updated.`);
+        } else {
+            // Create new user
+            if (!password) {
+                showToast('error', 'Validation Error', 'Password is required for new users.');
+                return;
+            }
+            await UserStore.create({ name, email, role, password });
+            showToast('success', 'User Created', `${name}'s account has been created.`);
         }
-        UserStore.create({ name, email, role, password });
-        showToast('success', 'User Created', `${name}'s account has been created.`);
-    }
 
-    closeUserModal();
-    navigateTo('user-management');
+        closeUserModal();
+        navigateTo('user-management');
+    } catch (error) {
+        console.error('Error saving user:', error);
+        showToast('error', 'Save Failed', 'Unable to save user. Please try again.');
+    }
 }
 
-function resetUserPassword(userId) {
+async function resetUserPassword(userId) {
     const user = UserStore.getById(userId);
     if (!user) return;
 
     const newPassword = 'reset' + Math.random().toString(36).substring(2, 8);
-    UserStore.resetPassword(userId, newPassword);
-    showToast('success', 'Password Reset', `Password for ${user.name} has been reset to: ${newPassword}`);
+    try {
+        await UserStore.resetPassword(userId, newPassword);
+        showToast('success', 'Password Reset', `Password for ${user.name} has been reset to: ${newPassword}`);
+    } catch (error) {
+        console.error('Error resetting password:', error);
+        showToast('error', 'Reset Failed', 'Unable to reset password. Please try again.');
+    }
 }
 
-function suspendUser(userId) {
+async function suspendUser(userId) {
     const user = UserStore.getById(userId);
     if (!user) return;
 
     if (confirm(`Are you sure you want to suspend ${user.name}'s account?`)) {
-        UserStore.suspend(userId);
-        showToast('warning', 'User Suspended', `${user.name}'s account has been suspended.`);
-        navigateTo('user-management');
+        try {
+            await UserStore.suspend(userId);
+            showToast('warning', 'User Suspended', `${user.name}'s account has been suspended.`);
+            navigateTo('user-management');
+        } catch (error) {
+            console.error('Error suspending user:', error);
+            showToast('error', 'Suspend Failed', 'Unable to suspend user. Please try again.');
+        }
     }
 }
 
-function activateUser(userId) {
+async function activateUser(userId) {
     const user = UserStore.getById(userId);
     if (!user) return;
 
-    UserStore.activate(userId);
-    showToast('success', 'User Activated', `${user.name}'s account has been activated.`);
-    navigateTo('user-management');
+    try {
+        await UserStore.activate(userId);
+        showToast('success', 'User Activated', `${user.name}'s account has been activated.`);
+        navigateTo('user-management');
+    } catch (error) {
+        console.error('Error activating user:', error);
+        showToast('error', 'Activation Failed', 'Unable to activate user. Please try again.');
+    }
 }
 
 function createUserModal() {
