@@ -173,14 +173,49 @@ function checkAuthState() {
 function handleLogin(e) {
     e.preventDefault();
     const email = document.getElementById('email').value;
-    const user = DEMO_USERS[email];
+    const password = document.getElementById('password').value;
 
-    if (user) {
-        AppState.currentUser = user;
+    // First try UserStore (includes all users created via User Management)
+    if (typeof UserStore !== 'undefined') {
+        const result = UserStore.authenticate(email, password);
+        if (result.success) {
+            const user = result.user;
+            // Map UserStore roles to app roles for compatibility
+            const roleMapping = {
+                'COORDINATOR': 'OPS_COORDINATOR',
+                'ADMIN': 'ADMIN',
+                'APPROVER': 'APPROVER',
+                'EMPLOYEE': 'EMPLOYEE',
+                'VENDOR': 'VENDOR',
+                'FINANCE': 'FINANCE'
+            };
+
+            AppState.currentUser = {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: roleMapping[user.role] || user.role,
+                avatar: user.name[0].toUpperCase()
+            };
+            AppState.isAuthenticated = true;
+            localStorage.setItem('missionPossibleUser', JSON.stringify(AppState.currentUser));
+            showMainApp();
+            showToast('success', 'Welcome back!', `Signed in as ${user.name}`);
+            return;
+        } else if (result.error === 'Account suspended') {
+            showToast('error', 'Account Suspended', 'Your account has been suspended. Contact an administrator.');
+            return;
+        }
+    }
+
+    // Fallback to DEMO_USERS for backward compatibility
+    const demoUser = DEMO_USERS[email];
+    if (demoUser) {
+        AppState.currentUser = demoUser;
         AppState.isAuthenticated = true;
-        localStorage.setItem('missionPossibleUser', JSON.stringify(user));
+        localStorage.setItem('missionPossibleUser', JSON.stringify(demoUser));
         showMainApp();
-        showToast('success', 'Welcome back!', `Signed in as ${user.name}`);
+        showToast('success', 'Welcome back!', `Signed in as ${demoUser.name}`);
     } else {
         showToast('error', 'Login failed', 'Invalid email or password');
     }
