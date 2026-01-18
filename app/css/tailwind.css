@@ -1,0 +1,376 @@
+/* Tailwind CSS v4 Input File */
+@import "tailwindcss";
+
+/* Import existing CSS variables for gradual migration */
+@import "./tokens.css";
+
+/* =====================
+   TAILWIND COMPONENTS LAYER
+   ===================== */
+@layer components {
+
+    /* =====================
+     BUTTONS
+     ===================== */
+    .tw-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        line-height: 1;
+        border-radius: 0.5rem;
+        border: 1px solid transparent;
+        cursor: pointer;
+        transition: all 150ms ease;
+        white-space: nowrap;
+    }
+
+    .tw-btn:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(0, 87, 61, 0.3);
+    }
+
+    .tw-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .tw-btn-primary {
+        background: linear-gradient(135deg, #00573D, #007B4B);
+        color: white;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .tw-btn-primary:hover:not(:disabled) {
+        background: linear-gradient(135deg, #004832, #00573D);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .tw-btn-secondary {
+        background: white;
+        color: #1a1a1a;
+        border-color: #D9D9D6;
+    }
+
+    .tw-btn-secondary:hover:not(:disabled) {
+        background: #f7f7f7;
+        border-color: #b3b3b3;
+    }
+
+    .tw-btn-ghost {
+        background: transparent;
+        color: #53565A;
+    }
+
+    .tw-btn-ghost:hover:not(:disabled) {
+        background: #ededed;
+        color: #1a1a1a;
+    }
+
+    .tw-btn-danger {
+        background: #AF272F;
+        color: white;
+    }
+
+    .tw-btn-danger:hover:not(:disabled) {
+        background: #8A2A2B;
+    }
+
+    .tw-btn-sm {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+    }
+
+    .tw-btn-lg {
+        padding: 1rem 1.5rem;
+        font-size: 1rem;
+    }
+
+    /* =====================
+     FORMS
+     ===================== */
+    .tw-form-input,
+    .tw-form-select,
+    .tw-form-textarea {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background: white;
+        border: 1px solid #D9D9D6;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        color: #1a1a1a;
+        transition: all 150ms ease;
+    }
+
+    .tw-form-input::placeholder,
+    .tw-form-textarea::placeholder {
+        color: #939597;
+    }
+
+    .tw-form-input:hover,
+    .tw-form-select:hover,
+    .tw-form-textarea:hover {
+        border-color: #b3b3b3;
+    }
+
+    .tw-form-input:focus,
+    .tw-form-select:focus,
+    .tw-form-textarea:focus {
+        outline: none;
+        border-color: #00573D;
+        box-shadow: 0 0 0 3px rgba(0, 87, 61, 0.3);
+    }
+
+    .tw-form-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #1a1a1a;
+    }
+
+    .tw-form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        flex: 1;
+    }
+
+    /* =====================
+     CARDS
+     ===================== */
+    .tw-card {
+        background: white;
+        border-radius: 0.75rem;
+        border: 1px solid #D9D9D6;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .tw-card-header {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #ededed;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .tw-card-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin: 0;
+    }
+
+    .tw-card-body {
+        padding: 1.25rem;
+    }
+
+    .tw-card-footer {
+        padding: 1rem 1.25rem;
+        border-top: 1px solid #ededed;
+        background: #f7f7f7;
+    }
+
+    .tw-card-interactive {
+        cursor: pointer;
+        transition: all 150ms ease;
+    }
+
+    .tw-card-interactive:hover {
+        border-color: #00573D;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    /* =====================
+     STATUS CHIPS
+     ===================== */
+    .tw-status-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 9999px;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
+
+    .tw-status-submitted {
+        background: #e3f2fd;
+        color: #004C97;
+    }
+
+    .tw-status-approved {
+        background: #e8f5e9;
+        color: #007B4B;
+    }
+
+    .tw-status-rejected {
+        background: #ffebee;
+        color: #AF272F;
+    }
+
+    .tw-status-pending {
+        background: #fff8e1;
+        color: #E57200;
+    }
+
+    /* =====================
+     MODALS
+     ===================== */
+    .tw-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+
+    .tw-modal-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+    }
+
+    .tw-modal-content {
+        position: relative;
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+        width: 100%;
+        max-width: 32rem;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .tw-modal-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #ededed;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+    }
+
+    .tw-modal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0;
+        text-wrap: balance;
+    }
+
+    .tw-modal-body {
+        padding: 1.5rem;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .tw-modal-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #ededed;
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        flex-shrink: 0;
+        background: #f7f7f7;
+    }
+
+    /* =====================
+     TOASTS
+     ===================== */
+    .tw-toast-container {
+        position: fixed;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        z-index: 700;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        pointer-events: none;
+    }
+
+    .tw-toast {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        border: 1px solid #D9D9D6;
+        min-width: 20rem;
+        max-width: 26rem;
+        pointer-events: auto;
+    }
+
+    /* =====================
+     AVATARS
+     ===================== */
+    .tw-avatar {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 9999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        background: linear-gradient(135deg, #00573D, #00AA52);
+        font-size: 0.875rem;
+    }
+
+    .tw-avatar-sm {
+        width: 2rem;
+        height: 2rem;
+        font-size: 0.75rem;
+    }
+
+    .tw-avatar-lg {
+        width: 3rem;
+        height: 3rem;
+        font-size: 1rem;
+    }
+}
+
+/* =====================
+   UTILITIES LAYER
+   ===================== */
+@layer utilities {
+
+    /* Text balance for headings (UI Skills) */
+    .text-balance {
+        text-wrap: balance;
+    }
+
+    /* Text pretty for body (UI Skills) */
+    .text-pretty {
+        text-wrap: pretty;
+    }
+
+    /* Tabular nums for data (UI Skills) */
+    .tabular-nums {
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+/* Respect prefers-reduced-motion (UI Skills) */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
