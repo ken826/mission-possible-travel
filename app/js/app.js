@@ -222,6 +222,7 @@ function handleLogin(e) {
 }
 
 function handleLogout() {
+    cleanupNotifications(); // Clean up notification subscription
     AppState.currentUser = null;
     AppState.isAuthenticated = false;
     localStorage.removeItem('missionPossibleUser');
@@ -239,6 +240,7 @@ function showMainApp() {
     document.getElementById('main-app').classList.remove('hidden');
     updateUserDisplay();
     updateMenuVisibility();
+    initNotifications(); // Initialize notification subscription
     navigateTo('dashboard');
 }
 
@@ -1109,6 +1111,15 @@ async function submitRequest() {
             AppState.requests.unshift(newRequest);
         }
 
+        // Notify coordinators about new request
+        if (window.NotificationService && window.UserStore) {
+            const coordinators = window.UserStore.getAll().filter(u =>
+                u.role === 'COORDINATOR' && u.status === 'active'
+            );
+            const coordinatorEmails = coordinators.map(c => c.email);
+            await window.NotificationService.helpers.requestSubmitted(newRequest, coordinatorEmails);
+        }
+
         closeModal();
         // Reset form
         document.getElementById('travel-form')?.reset();
@@ -1151,6 +1162,16 @@ async function handleApprove(id) {
             } else {
                 req.status = 'APPROVED';
             }
+
+            // Notify requester about approval
+            if (window.NotificationService && req.requesterEmail) {
+                await window.NotificationService.helpers.requestApproved(
+                    req,
+                    req.requesterEmail,
+                    AppState.currentUser?.name || 'Approver'
+                );
+            }
+
             navigateTo(AppState.currentPage);
             showToast('success', 'Request approved', `${id} has been approved and sent to Ops for processing.`);
         } catch (error) {
@@ -1169,6 +1190,17 @@ async function handleReject(id) {
             } else {
                 req.status = 'REJECTED';
             }
+
+            // Notify requester about rejection
+            if (window.NotificationService && req.requesterEmail) {
+                await window.NotificationService.helpers.requestRejected(
+                    req,
+                    req.requesterEmail,
+                    AppState.currentUser?.name || 'Approver',
+                    '' // No reason provided in this flow
+                );
+            }
+
             navigateTo(AppState.currentPage);
             showToast('info', 'Request rejected', `${id} has been rejected.`);
         } catch (error) {
@@ -2118,15 +2150,43 @@ function changePassword() {
 }
 
 // =====================
-// NOTIFICATIONS SYSTEM
+// NOTIFICATIONS SYSTEM (Firestore-backed)
 // =====================
 const NotificationsState = {
-    notifications: [
-        { id: 1, type: 'approval', title: 'Request Approved', message: 'REQ-2026-001 has been approved by David', time: '10 minutes ago', read: false, requestId: 'REQ-2026-001' },
-        { id: 2, type: 'action', title: 'Action Required', message: 'REQ-2026-002 needs your review', time: '1 hour ago', read: false, requestId: 'REQ-2026-002' },
-        { id: 3, type: 'update', title: 'Request Updated', message: 'Emma uploaded new documents to REQ-2026-003', time: '2 hours ago', read: false, requestId: 'REQ-2026-003' }
-    ]
+    notifications: [],
+    unsubscribe: null
 };
+
+/**
+ * Initialize notifications with Firestore subscription
+ */
+function initNotifications() {
+    if (!AppState.currentUser) return;
+
+    const userEmail = AppState.currentUser.email;
+
+    // Subscribe to real-time notification updates
+    if (window.NotificationService) {
+        NotificationsState.unsubscribe = window.NotificationService.subscribeToUserNotifications(
+            userEmail,
+            (notifications) => {
+                NotificationsState.notifications = notifications;
+                updateNotificationCount();
+            }
+        );
+    }
+}
+
+/**
+ * Cleanup notification subscription on logout
+ */
+function cleanupNotifications() {
+    if (NotificationsState.unsubscribe) {
+        NotificationsState.unsubscribe();
+        NotificationsState.unsubscribe = null;
+    }
+    NotificationsState.notifications = [];
+}
 
 function toggleNotifications(e) {
     e?.stopPropagation();
@@ -2164,14 +2224,14 @@ function renderNotifications() {
     }
 
     list.innerHTML = notifications.map(n => `
-        <div class="notification-item ${n.read ? 'read' : ''}" onclick="handleNotificationClick(${n.id})">
+        <div class="notification-item ${n.read ? 'read' : ''}" onclick="handleNotificationClick('${n.id}')">
             <div class="notification-icon ${n.type}">
                 ${getNotificationIcon(n.type)}
             </div>
             <div class="notification-content">
                 <div class="notification-title">${n.title}</div>
                 <p class="notification-message">${n.message}</p>
-                <span class="notification-time">${n.time}</span>
+                <span class="notification-time">${n.time || 'Just now'}</span>
             </div>
             ${!n.read ? '<span class="notification-dot"></span>' : ''}
         </div>
@@ -2187,12 +2247,16 @@ function getNotificationIcon(type) {
     return icons[type] || icons.update;
 }
 
-function handleNotificationClick(id) {
+async function handleNotificationClick(id) {
     const notification = NotificationsState.notifications.find(n => n.id === id);
     if (notification) {
-        notification.read = true;
-        updateNotificationCount();
+        // Mark as read in Firestore
+        if (window.NotificationService) {
+            await window.NotificationService.markRead(id);
+        }
+
         closeNotifications();
+
         // Navigate to the related request
         if (notification.requestId) {
             viewRequestDetail(notification.requestId);
@@ -2200,19 +2264,19 @@ function handleNotificationClick(id) {
     }
 }
 
-function markNotificationRead(id) {
-    const notification = NotificationsState.notifications.find(n => n.id === id);
-    if (notification) {
-        notification.read = true;
-        updateNotificationCount();
-        renderNotifications();
+async function markNotificationRead(id) {
+    if (window.NotificationService) {
+        await window.NotificationService.markRead(id);
     }
 }
 
-function clearAllNotifications() {
-    NotificationsState.notifications = [];
-    updateNotificationCount();
-    renderNotifications();
+async function clearAllNotifications() {
+    if (!AppState.currentUser) return;
+
+    if (window.NotificationService) {
+        await window.NotificationService.clearAll(AppState.currentUser.email);
+    }
+
     closeNotifications();
     showToast('success', 'Notifications Cleared', 'All notifications have been cleared.');
 }
