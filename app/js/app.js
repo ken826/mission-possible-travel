@@ -1650,21 +1650,164 @@ async function createInvoiceForRequest(requestId) {
     }
 }
 
-// View invoice detail (placeholder - could implement modal)
+// View invoice detail modal
 function viewInvoiceDetail(invoiceId) {
+    if (typeof InvoiceStore === 'undefined') {
+        showToast('error', 'Error', 'Invoice system not available.');
+        return;
+    }
+
+    const invoice = InvoiceStore.getById(invoiceId);
+    if (!invoice) {
+        showToast('error', 'Error', 'Invoice not found.');
+        return;
+    }
+
+    const statusColors = {
+        'DRAFT': 'status-triage',
+        'SENT': 'status-submitted',
+        'PAID': 'status-approved',
+        'OVERDUE': 'status-rejected',
+        'CANCELLED': 'status-cancelled'
+    };
+
+    const modalHtml = `
+        <div id="invoice-modal" class="modal">
+            <div class="modal-backdrop" onclick="closeInvoiceModal()"></div>
+            <div class="modal-container">
+                <div class="modal-content modal-lg">
+                    <div class="modal-header">
+                        <div>
+                            <h2 class="modal-title">${invoice.id}</h2>
+                            <p style="font-size: var(--font-size-sm); color: var(--color-text-muted); margin: 0;">${invoice.requestTitle}</p>
+                        </div>
+                        <button class="modal-close-btn" onclick="closeInvoiceModal()">
+                            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/></svg>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Invoice Header Info -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-bottom: var(--space-6);">
+                            <div>
+                                <div style="font-size: var(--font-size-sm); color: var(--color-text-muted);">Vendor</div>
+                                <div style="font-size: var(--font-size-base); font-weight: 600;">${invoice.vendor}</div>
+                                <div style="font-size: var(--font-size-sm); color: var(--color-text-secondary);">${invoice.vendorEmail}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <span class="status-chip ${statusColors[invoice.status] || 'status-triage'}">${invoice.status}</span>
+                            </div>
+                        </div>
+
+                        <!-- Dates -->
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); margin-bottom: var(--space-6); padding: var(--space-4); background: var(--color-grey-50); border-radius: var(--radius-md);">
+                            <div>
+                                <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase;">Issue Date</div>
+                                <div style="font-size: var(--font-size-sm); font-weight: 500;">${invoice.issueDate}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase;">Due Date</div>
+                                <div style="font-size: var(--font-size-sm); font-weight: 500;">${invoice.dueDate}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase;">Created By</div>
+                                <div style="font-size: var(--font-size-sm); font-weight: 500;">${invoice.createdBy}</div>
+                            </div>
+                        </div>
+
+                        <!-- Line Items -->
+                        <div style="margin-bottom: var(--space-4);">
+                            <h4 style="font-size: var(--font-size-sm); font-weight: 600; margin-bottom: var(--space-3);">Line Items</h4>
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="border-bottom: 2px solid var(--color-border);">
+                                        <th style="text-align: left; padding: var(--space-2); font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase;">Description</th>
+                                        <th style="text-align: right; padding: var(--space-2); font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase;">Qty</th>
+                                        <th style="text-align: right; padding: var(--space-2); font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase;">Unit Price</th>
+                                        <th style="text-align: right; padding: var(--space-2); font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase;">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${invoice.lineItems.map(item => `
+                                        <tr style="border-bottom: 1px solid var(--color-border-light);">
+                                            <td style="padding: var(--space-3) var(--space-2); font-size: var(--font-size-sm);">${item.description}</td>
+                                            <td style="padding: var(--space-3) var(--space-2); font-size: var(--font-size-sm); text-align: right; font-variant-numeric: tabular-nums;">${item.quantity}</td>
+                                            <td style="padding: var(--space-3) var(--space-2); font-size: var(--font-size-sm); text-align: right; font-variant-numeric: tabular-nums;">$${item.unitPrice.toFixed(2)}</td>
+                                            <td style="padding: var(--space-3) var(--space-2); font-size: var(--font-size-sm); text-align: right; font-weight: 500; font-variant-numeric: tabular-nums;">$${(item.quantity * item.unitPrice).toFixed(2)}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Totals -->
+                        <div style="margin-left: auto; width: 250px; border-top: 2px solid var(--color-border);">
+                            <div style="display: flex; justify-content: space-between; padding: var(--space-2) 0; font-size: var(--font-size-sm);">
+                                <span style="color: var(--color-text-muted);">Subtotal</span>
+                                <span style="font-variant-numeric: tabular-nums;">$${invoice.subtotal.toFixed(2)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: var(--space-2) 0; font-size: var(--font-size-sm);">
+                                <span style="color: var(--color-text-muted);">GST (10%)</span>
+                                <span style="font-variant-numeric: tabular-nums;">$${invoice.gst.toFixed(2)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: var(--space-3) 0; font-size: var(--font-size-lg); font-weight: 700; border-top: 2px solid var(--color-border);">
+                                <span>Total</span>
+                                <span style="color: var(--color-primary); font-variant-numeric: tabular-nums;">$${invoice.total.toFixed(2)}</span>
+                            </div>
+                        </div>
+
+                        ${invoice.notes ? `
+                            <div style="margin-top: var(--space-4); padding: var(--space-3); background: var(--color-grey-50); border-radius: var(--radius-md); border-left: 3px solid var(--color-primary);">
+                                <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-bottom: var(--space-1);">Notes</div>
+                                <div style="font-size: var(--font-size-sm);">${invoice.notes}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="modal-footer">
+                        ${invoice.status === 'DRAFT' ? `
+                            <button class="btn btn-secondary" onclick="updateInvoiceStatus('${invoice.id}', 'CANCELLED')">Cancel Invoice</button>
+                            <button class="btn btn-primary" onclick="updateInvoiceStatus('${invoice.id}', 'SENT')">Mark as Sent</button>
+                        ` : invoice.status === 'SENT' ? `
+                            <button class="btn btn-secondary" onclick="updateInvoiceStatus('${invoice.id}', 'OVERDUE')">Mark Overdue</button>
+                            <button class="btn btn-success" onclick="updateInvoiceStatus('${invoice.id}', 'PAID')">Mark as Paid</button>
+                        ` : invoice.status === 'OVERDUE' ? `
+                            <button class="btn btn-success" onclick="updateInvoiceStatus('${invoice.id}', 'PAID')">Mark as Paid</button>
+                        ` : `
+                            <button class="btn btn-secondary" onclick="closeInvoiceModal()">Close</button>
+                        `}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Remove existing modal if any
+    document.getElementById('invoice-modal')?.remove();
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.body.style.overflow = 'hidden';
+}
+
+// Close invoice modal
+function closeInvoiceModal() {
+    document.getElementById('invoice-modal')?.remove();
+    document.body.style.overflow = '';
+}
+
+// Update invoice status
+function updateInvoiceStatus(invoiceId, newStatus) {
     if (typeof InvoiceStore !== 'undefined') {
-        const invoice = InvoiceStore.getById(invoiceId);
-        if (invoice) {
-            // For now, just navigate to invoices page
-            navigateTo('invoices');
-            showToast('info', 'Invoice Selected', `Viewing ${invoiceId}`);
-        }
+        InvoiceStore.updateStatus(invoiceId, newStatus);
+        closeInvoiceModal();
+        showToast('success', 'Invoice Updated', `Invoice status changed to ${newStatus}`);
+        // Refresh current page
+        navigateTo(AppState.currentPage, AppState.currentPageParam);
     }
 }
 
 // Make invoice functions available globally
 window.createInvoiceForRequest = createInvoiceForRequest;
 window.viewInvoiceDetail = viewInvoiceDetail;
+window.closeInvoiceModal = closeInvoiceModal;
+window.updateInvoiceStatus = updateInvoiceStatus;
 
 // Render the notes tab
 function renderNotesTab(req, notes) {
