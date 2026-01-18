@@ -1575,7 +1575,7 @@ function renderInvoicesTab(requestId, req) {
     const invoices = typeof InvoiceStore !== 'undefined' ? InvoiceStore.getByRequestId(requestId) : [];
     const canCreateInvoice = ['BOOKED', 'ITINERARY_SENT', 'INVOICED'].includes(req.status);
     const userRole = AppState.currentUser?.role;
-    const canManageInvoices = ['COORDINATOR', 'ADMIN'].includes(userRole);
+    const canManageInvoices = ['COORDINATOR', 'OPS_COORDINATOR', 'ADMIN'].includes(userRole);
 
     const statusColors = {
         'DRAFT': 'status-triage',
