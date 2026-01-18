@@ -1630,6 +1630,23 @@ function renderInvoicesTab(requestId, req) {
                 `}
             </div>
         </div>
+        
+        ${canManageInvoices ? `
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Upload Invoice</h3>
+            </div>
+            <div class="card-body">
+                <div class="upload-zone" onclick="document.getElementById('invoice-file-${requestId}').click()">
+                    <input type="file" id="invoice-file-${requestId}" accept=".pdf,.jpg,.jpeg,.png" style="display: none;" onchange="handleInvoiceUpload('${requestId}', this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 32px; height: 32px; color: var(--color-text-muted); margin-bottom: var(--space-2);">
+                        <path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                    </svg>
+                    <p style="font-size: var(--font-size-sm); color: var(--color-text-secondary); margin: 0;">Click to upload invoice (PDF, JPG, PNG)</p>
+                </div>
+            </div>
+        </div>
+        ` : ''}
     `;
 }
 
@@ -1649,6 +1666,61 @@ async function createInvoiceForRequest(requestId) {
         showToast('error', 'Error', 'Invoice system not available.');
     }
 }
+
+// Handle invoice file upload
+function handleInvoiceUpload(requestId, input) {
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const req = AppState.requests.find(r => r.id === requestId);
+    if (!req) {
+        showToast('error', 'Error', 'Request not found.');
+        return;
+    }
+
+    // Validate file type
+    const validTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+    if (!validTypes.includes(file.type)) {
+        showToast('error', 'Invalid File', 'Please upload a PDF, JPG, or PNG file.');
+        input.value = '';
+        return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+        showToast('error', 'File Too Large', 'Maximum file size is 10MB.');
+        input.value = '';
+        return;
+    }
+
+    // Create invoice from uploaded file
+    if (typeof InvoiceStore !== 'undefined') {
+        const newInvoice = InvoiceStore.create({
+            requestId: req.id,
+            requestTitle: req.title,
+            vendor: 'Uploaded Invoice',
+            vendorEmail: '',
+            lineItems: [
+                { id: 1, description: `Invoice for ${req.title}`, quantity: 1, unitPrice: req.estimate || 0 }
+            ],
+            notes: `Uploaded file: ${file.name}`
+        });
+
+        // Store file reference (in production, would upload to storage)
+        console.log('Invoice file uploaded:', file.name, 'for invoice:', newInvoice.id);
+
+        showToast('success', 'Invoice Uploaded', `${newInvoice.id} created from uploaded file.`);
+        navigateTo('request-detail', requestId);
+    } else {
+        showToast('error', 'Error', 'Invoice system not available.');
+    }
+
+    // Reset input
+    input.value = '';
+}
+
+// Make upload function available globally
+window.handleInvoiceUpload = handleInvoiceUpload;
 
 // View invoice detail modal
 function viewInvoiceDetail(invoiceId) {
