@@ -1352,6 +1352,7 @@ function renderRequestDetail(requestId) {
                     <button class="tab-btn active" onclick="showDetailTab('details')">Details</button>
                     <button class="tab-btn" onclick="showDetailTab('timeline')">Timeline</button>
                     <button class="tab-btn" onclick="showDetailTab('documents')">Documents <span class="tab-badge">${documents.length}</span></button>
+                    <button class="tab-btn" onclick="showDetailTab('invoices')">Invoices <span class="tab-badge">${typeof InvoiceStore !== 'undefined' ? InvoiceStore.getByRequestId(requestId).length : 0}</span></button>
                     <button class="tab-btn" onclick="showDetailTab('notes')">Notes <span class="tab-badge">${notes.length}</span></button>
                 </div>
                 
@@ -1377,6 +1378,11 @@ function renderRequestDetail(requestId) {
                             ${canUpload ? (typeof renderDocumentUploadPanel !== 'undefined' ? renderDocumentUploadPanel(requestId) : '') : ''}
                         </div>
                     </div>
+                </div>
+                
+                <!-- Invoices Tab -->
+                <div id="tab-invoices" class="tab-content">
+                    ${renderInvoicesTab(requestId, req)}
                 </div>
                 
                 <!-- Notes Tab -->
@@ -1563,6 +1569,102 @@ function renderTimelineTab(timeline) {
         </div>
     `;
 }
+
+// Render the invoices tab
+function renderInvoicesTab(requestId, req) {
+    const invoices = typeof InvoiceStore !== 'undefined' ? InvoiceStore.getByRequestId(requestId) : [];
+    const canCreateInvoice = ['BOOKED', 'ITINERARY_SENT', 'INVOICED'].includes(req.status);
+    const userRole = AppState.currentUser?.role;
+    const canManageInvoices = ['COORDINATOR', 'ADMIN'].includes(userRole);
+
+    const statusColors = {
+        'DRAFT': 'status-triage',
+        'SENT': 'status-submitted',
+        'PAID': 'status-approved',
+        'OVERDUE': 'status-rejected',
+        'CANCELLED': 'status-cancelled'
+    };
+
+    return `
+        <div class="card" style="margin-bottom: var(--space-4);">
+            <div class="card-header">
+                <h3 class="card-title">Invoices</h3>
+                ${canManageInvoices && canCreateInvoice ? `
+                    <button class="btn btn-primary btn-sm" onclick="createInvoiceForRequest('${requestId}')">
+                        <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"/></svg>
+                        Create Invoice
+                    </button>
+                ` : ''}
+            </div>
+            <div class="card-body">
+                ${invoices.length === 0 ? `
+                    <div class="empty-state" style="padding: var(--space-8) 0;">
+                        <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <h3 class="empty-state-title">No invoices yet</h3>
+                        <p class="empty-state-desc">${canCreateInvoice ? 'Create an invoice once booking is confirmed.' : 'Invoices will appear here once the request is booked.'}</p>
+                    </div>
+                ` : `
+                    <div class="invoice-list">
+                        ${invoices.map(inv => `
+                            <div class="invoice-item" onclick="viewInvoiceDetail('${inv.id}')">
+                                <div class="invoice-item-main">
+                                    <div class="invoice-id">${inv.id}</div>
+                                    <div class="invoice-vendor">${inv.vendor}</div>
+                                </div>
+                                <div class="invoice-item-details">
+                                    <span class="invoice-dates">
+                                        <span style="color: var(--color-text-muted);">Issued:</span> ${inv.issueDate}
+                                        <span style="margin: 0 var(--space-2);">•</span>
+                                        <span style="color: var(--color-text-muted);">Due:</span> ${inv.dueDate}
+                                    </span>
+                                </div>
+                                <div class="invoice-item-amount">
+                                    <span class="invoice-total">$${inv.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                    <span class="status-chip ${statusColors[inv.status] || 'status-triage'}">${inv.status}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `}
+            </div>
+        </div>
+    `;
+}
+
+// Create invoice for request
+async function createInvoiceForRequest(requestId) {
+    const req = AppState.requests.find(r => r.id === requestId);
+    if (!req) {
+        showToast('error', 'Error', 'Request not found.');
+        return;
+    }
+
+    if (typeof InvoiceStore !== 'undefined') {
+        const newInvoice = InvoiceStore.generateFromRequest(req);
+        showToast('success', 'Invoice Created', `${newInvoice.id} has been created as a draft.`);
+        navigateTo('request-detail', requestId);
+    } else {
+        showToast('error', 'Error', 'Invoice system not available.');
+    }
+}
+
+// View invoice detail (placeholder - could implement modal)
+function viewInvoiceDetail(invoiceId) {
+    if (typeof InvoiceStore !== 'undefined') {
+        const invoice = InvoiceStore.getById(invoiceId);
+        if (invoice) {
+            // For now, just navigate to invoices page
+            navigateTo('invoices');
+            showToast('info', 'Invoice Selected', `Viewing ${invoiceId}`);
+        }
+    }
+}
+
+// Make invoice functions available globally
+window.createInvoiceForRequest = createInvoiceForRequest;
+window.viewInvoiceDetail = viewInvoiceDetail;
 
 // Render the notes tab
 function renderNotesTab(req, notes) {
