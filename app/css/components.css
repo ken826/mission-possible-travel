@@ -1365,7 +1365,7 @@
    ===================== */
 .request-detail-layout {
     display: grid;
-    grid-template-columns: 1fr 360px;
+    grid-template-columns: 3fr 1fr;
     gap: var(--space-6);
     align-items: start;
 }
