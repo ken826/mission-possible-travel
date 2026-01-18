@@ -1367,10 +1367,12 @@
     display: grid;
     grid-template-columns: 1fr 360px;
     gap: var(--space-6);
+    align-items: start;
 }
 
 .request-detail-main {
     min-width: 0;
+    overflow: hidden;
 }
 
 .request-detail-sidebar {
@@ -2715,6 +2717,7 @@
         justify-content: space-between;
     }
 }
+
 /* =====================
    INVOICE LIST IN REQUEST DETAIL
    ===================== */
