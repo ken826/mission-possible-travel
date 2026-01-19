@@ -2306,9 +2306,29 @@ function filterAuditLog(searchQuery, categoryFilter) {
 function exportAuditLog(format) {
     const logs = typeof AuditLog !== 'undefined' ? AuditLog.getRecent(100) : [];
 
+    // Build filename: date - search - category
+    const dateStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const searchPart = AuditLogState.searchQuery ? AuditLogState.searchQuery.replace(/[^a-zA-Z0-9]/g, '_') : 'all';
+    const categoryPart = AuditLogState.categoryFilter === 'ALL' ? 'all' : AuditLogState.categoryFilter.toLowerCase().replace(/_/g, '-');
+    const baseFilename = `${dateStr}-${searchPart}-${categoryPart}`;
+
+    // Apply current filters to exported data
+    let filteredLogs = logs;
+    if (AuditLogState.searchQuery) {
+        const query = AuditLogState.searchQuery.toLowerCase();
+        filteredLogs = filteredLogs.filter(log =>
+            log.action.toLowerCase().includes(query) ||
+            log.actor.toLowerCase().includes(query) ||
+            JSON.stringify(log.details).toLowerCase().includes(query)
+        );
+    }
+    if (AuditLogState.categoryFilter !== 'ALL') {
+        filteredLogs = filteredLogs.filter(log => log.action === AuditLogState.categoryFilter);
+    }
+
     if (format === 'csv') {
         const headers = ['Timestamp', 'Action', 'Actor', 'Details'];
-        const rows = logs.map(log => [
+        const rows = filteredLogs.map(log => [
             new Date(log.timestamp).toISOString(),
             log.action,
             log.actor,
@@ -2316,13 +2336,13 @@ function exportAuditLog(format) {
         ]);
 
         const csv = [headers.join(','), ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
-        downloadFile(csv, 'audit-log.csv', 'text/csv');
-    } else {
-        const json = JSON.stringify(logs, null, 2);
-        downloadFile(json, 'audit-log.json', 'application/json');
+        downloadFile(csv, `${baseFilename}.csv`, 'text/csv');
+    } else if (format === 'json') {
+        const json = JSON.stringify(filteredLogs, null, 2);
+        downloadFile(json, `${baseFilename}.json`, 'application/json');
     }
 
-    showToast('success', 'Export Complete', `Audit log exported as ${format.toUpperCase()}`);
+    showToast('success', 'Export Complete', `Exported ${filteredLogs.length} entries as ${format.toUpperCase()}`);
 }
 
 function downloadFile(content, filename, mimeType) {
