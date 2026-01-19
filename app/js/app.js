@@ -337,6 +337,7 @@ function renderPage(page) {
         case 'all-requests': return renderAllRequests();
         case 'approvals': return renderApprovals();
         case 'invoices': return renderInvoices();
+        case 'reports': return renderReportsPage();
         case 'search-results': return renderSearchResults();
         case 'vendor-portal': return renderVendorPortal();
         case 'documents': return renderDocumentsPage();
@@ -2146,6 +2147,332 @@ function renderDocumentsPage() {
         </div>
     `;
 }
+
+// =====================
+// REPORTS PAGE
+// =====================
+
+const ReportsState = {
+    dateRange: '30days', // 7days, 30days, 90days, year, all
+    reportType: 'overview' // overview, requests, financial, status
+};
+
+function renderReportsPage() {
+    // Access control - Coordinators, Finance, Admin only
+    const allowedRoles = ['COORDINATOR', 'OPS_COORDINATOR', 'FINANCE', 'ADMIN'];
+    if (!allowedRoles.includes(AppState.currentUser?.role)) {
+        return `
+            <div class="page-header">
+                <div class="page-header-content">
+                    <h1 class="page-title">Access Denied</h1>
+                    <p class="page-subtitle">You do not have permission to view Reports.</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <div class="empty-state" style="padding: var(--space-8);">
+                        <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
+                        </svg>
+                        <h3 class="empty-state-title">Coordinator/Finance Access Required</h3>
+                        <p class="empty-state-desc">Only coordinators, finance, and administrators can view reports.</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    const reportData = generateReportData();
+
+    return `
+        <div class="page-header">
+            <div class="page-header-content">
+                <h1 class="page-title">Reports & Analytics</h1>
+                <p class="page-subtitle">View insights and statistics for travel and catering requests.</p>
+            </div>
+            <div class="page-actions">
+                <select class="form-select" onchange="setReportDateRange(this.value)" style="min-width: 150px;">
+                    <option value="7days" ${ReportsState.dateRange === '7days' ? 'selected' : ''}>Last 7 Days</option>
+                    <option value="30days" ${ReportsState.dateRange === '30days' ? 'selected' : ''}>Last 30 Days</option>
+                    <option value="90days" ${ReportsState.dateRange === '90days' ? 'selected' : ''}>Last 90 Days</option>
+                    <option value="year" ${ReportsState.dateRange === 'year' ? 'selected' : ''}>This Year</option>
+                    <option value="all" ${ReportsState.dateRange === 'all' ? 'selected' : ''}>All Time</option>
+                </select>
+                <button class="btn btn-secondary" onclick="exportReport('csv')">
+                    <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;">
+                        <path d="M10.75 2.75a.75.75 0 00-1.5 0v8.614L6.295 8.235a.75.75 0 10-1.09 1.03l4.25 4.5a.75.75 0 001.09 0l4.25-4.5a.75.75 0 00-1.09-1.03l-2.955 3.129V2.75z"/>
+                        <path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z"/>
+                    </svg>
+                    Export Report
+                </button>
+            </div>
+        </div>
+        
+        <!-- Summary Stats -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); margin-bottom: var(--space-6);">
+            ${renderStatsCard('primary', 'clipboard', reportData.totalRequests, 'Total Requests')}
+            ${renderStatsCard('success', 'check', reportData.completedRequests, 'Completed')}
+            ${renderStatsCard('warning', 'clock', reportData.pendingRequests, 'Pending')}
+            ${renderStatsCard('info', 'currency', '$' + reportData.totalSpend.toLocaleString(), 'Total Spend')}
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-6); margin-bottom: var(--space-6);">
+            <!-- Status Breakdown -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Request Status Breakdown</h3>
+                </div>
+                <div class="card-body">
+                    <div class="status-breakdown">
+                        ${Object.entries(reportData.statusBreakdown).map(([status, count]) => `
+                            <div class="status-bar-item">
+                                <div class="status-bar-label">
+                                    <span class="status-chip status-${status.toLowerCase()}">${status}</span>
+                                    <span class="status-count">${count}</span>
+                                </div>
+                                <div class="status-bar-track">
+                                    <div class="status-bar-fill" style="width: ${reportData.totalRequests > 0 ? (count / reportData.totalRequests * 100) : 0}%; background: var(--color-${getStatusColor(status)});"></div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Type Distribution -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Request Types</h3>
+                </div>
+                <div class="card-body">
+                    <div class="type-distribution">
+                        ${Object.entries(reportData.typeBreakdown).map(([type, count]) => `
+                            <div class="type-item">
+                                <div class="type-icon ${type.toLowerCase()}">
+                                    ${type === 'TRAVEL' ?
+            '<svg viewBox="0 0 20 20" fill="currentColor"><path d="M3.105 2.289a.75.75 0 00-.826.95l1.414 4.925A1.5 1.5 0 005.135 9.25h6.115a.75.75 0 010 1.5H5.135a1.5 1.5 0 00-1.442 1.086l-1.414 4.926a.75.75 0 00.826.95 28.896 28.896 0 0015.293-7.154.75.75 0 000-1.115A28.897 28.897 0 003.105 2.289z"/></svg>' :
+            '<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 3.75A2.75 2.75 0 018.75 1h2.5A2.75 2.75 0 0114 3.75v.443c.572.055 1.14.122 1.706.2C17.053 4.582 18 5.75 18 7.07v3.469c0 1.126-.694 2.191-1.83 2.54-1.952.599-4.024.921-6.17.921s-4.218-.322-6.17-.921C2.694 12.73 2 11.665 2 10.539V7.07c0-1.321.947-2.489 2.294-2.676A41.047 41.047 0 016 4.193V3.75zm6.5 0v.325a41.622 41.622 0 00-5 0V3.75c0-.69.56-1.25 1.25-1.25h2.5c.69 0 1.25.56 1.25 1.25z"/><path d="M10 10a1 1 0 00-1 1v.01a1 1 0 001 1h.01a1 1 0 001-1V11a1 1 0 00-1-1H10z"/><path d="M2 15.312c.425.18.865.334 1.318.458C5.264 16.313 7.586 16.5 10 16.5c2.414 0 4.736-.187 6.682-.73.453-.124.893-.278 1.318-.458v1.438a2.75 2.75 0 01-2.75 2.75h-10.5A2.75 2.75 0 012 16.75v-1.438z"/></svg>'
+        }
+                                </div>
+                                <div class="type-info">
+                                    <div class="type-name">${type}</div>
+                                    <div class="type-count">${count} requests</div>
+                                </div>
+                                <div class="type-percentage">${reportData.totalRequests > 0 ? Math.round(count / reportData.totalRequests * 100) : 0}%</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Financial Summary -->
+        <div class="card" style="margin-bottom: var(--space-6);">
+            <div class="card-header">
+                <h3 class="card-title">Financial Summary</h3>
+            </div>
+            <div class="card-body">
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-6);">
+                    <div class="financial-metric">
+                        <div class="metric-label">Total Estimated</div>
+                        <div class="metric-value">$${reportData.totalEstimate.toLocaleString()}</div>
+                    </div>
+                    <div class="financial-metric">
+                        <div class="metric-label">Total Invoiced</div>
+                        <div class="metric-value">$${reportData.totalInvoiced.toLocaleString()}</div>
+                    </div>
+                    <div class="financial-metric">
+                        <div class="metric-label">Total Paid</div>
+                        <div class="metric-value" style="color: var(--color-success);">$${reportData.totalPaid.toLocaleString()}</div>
+                    </div>
+                    <div class="financial-metric">
+                        <div class="metric-label">Outstanding</div>
+                        <div class="metric-value" style="color: var(--color-amber);">$${reportData.totalOutstanding.toLocaleString()}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Top Requesters -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6);">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Top Requesters</h3>
+                </div>
+                <div class="card-body">
+                    ${reportData.topRequesters.length === 0 ? '<p style="color: var(--color-text-muted);">No data available</p>' : `
+                        <div class="top-list">
+                            ${reportData.topRequesters.map((r, i) => `
+                                <div class="top-list-item">
+                                    <span class="top-rank">${i + 1}</span>
+                                    <span class="top-name">${r.name}</span>
+                                    <span class="top-value">${r.count} requests</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `}
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Recent Activity</h3>
+                </div>
+                <div class="card-body">
+                    ${reportData.recentRequests.length === 0 ? '<p style="color: var(--color-text-muted);">No recent activity</p>' : `
+                        <div class="recent-list">
+                            ${reportData.recentRequests.map(r => `
+                                <div class="recent-item" onclick="navigateTo('request-detail', '${r.id}')">
+                                    <div class="recent-info">
+                                        <div class="recent-title">${r.title}</div>
+                                        <div class="recent-meta">${r.id} • ${r.requester}</div>
+                                    </div>
+                                    <span class="status-chip status-${r.status.toLowerCase()}">${r.status}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function generateReportData() {
+    const requests = AppState.requests || [];
+    const invoices = typeof InvoiceStore !== 'undefined' ? InvoiceStore.getAll() : [];
+
+    // Filter by date range
+    const filteredRequests = filterByDateRange(requests, ReportsState.dateRange);
+    const filteredInvoices = filterByDateRange(invoices, ReportsState.dateRange, 'issueDate');
+
+    // Status breakdown
+    const statusBreakdown = {};
+    filteredRequests.forEach(r => {
+        statusBreakdown[r.status] = (statusBreakdown[r.status] || 0) + 1;
+    });
+
+    // Type breakdown
+    const typeBreakdown = {};
+    filteredRequests.forEach(r => {
+        typeBreakdown[r.type] = (typeBreakdown[r.type] || 0) + 1;
+    });
+
+    // Financial calculations
+    const totalEstimate = filteredRequests.reduce((sum, r) => sum + (r.estimate || 0), 0);
+    const totalInvoiced = filteredInvoices.reduce((sum, i) => sum + (i.total || 0), 0);
+    const totalPaid = filteredInvoices.filter(i => i.status === 'PAID').reduce((sum, i) => sum + (i.total || 0), 0);
+    const totalOutstanding = totalInvoiced - totalPaid;
+
+    // Top requesters
+    const requesterCounts = {};
+    filteredRequests.forEach(r => {
+        requesterCounts[r.requester] = (requesterCounts[r.requester] || 0) + 1;
+    });
+    const topRequesters = Object.entries(requesterCounts)
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
+    // Recent requests
+    const recentRequests = [...filteredRequests]
+        .sort((a, b) => new Date(b.created) - new Date(a.created))
+        .slice(0, 5);
+
+    return {
+        totalRequests: filteredRequests.length,
+        completedRequests: filteredRequests.filter(r => ['COMPLETED', 'INVOICED'].includes(r.status)).length,
+        pendingRequests: filteredRequests.filter(r => ['SUBMITTED', 'APPROVED', 'QUOTING', 'BOOKED'].includes(r.status)).length,
+        totalSpend: totalPaid,
+        statusBreakdown,
+        typeBreakdown,
+        totalEstimate,
+        totalInvoiced,
+        totalPaid,
+        totalOutstanding,
+        topRequesters,
+        recentRequests
+    };
+}
+
+function filterByDateRange(items, range, dateField = 'created') {
+    const now = new Date();
+    let cutoff;
+
+    switch (range) {
+        case '7days': cutoff = new Date(now - 7 * 24 * 60 * 60 * 1000); break;
+        case '30days': cutoff = new Date(now - 30 * 24 * 60 * 60 * 1000); break;
+        case '90days': cutoff = new Date(now - 90 * 24 * 60 * 60 * 1000); break;
+        case 'year': cutoff = new Date(now.getFullYear(), 0, 1); break;
+        default: return items;
+    }
+
+    return items.filter(item => new Date(item[dateField]) >= cutoff);
+}
+
+function setReportDateRange(range) {
+    ReportsState.dateRange = range;
+    navigateTo('reports');
+}
+
+function exportReport(format) {
+    const reportData = generateReportData();
+    const dateStr = new Date().toISOString().split('T')[0];
+    const filename = `report-${dateStr}-${ReportsState.dateRange}`;
+
+    if (format === 'csv') {
+        const lines = [
+            'Mission Possible Travel - Report',
+            `Generated: ${new Date().toLocaleString()}`,
+            `Date Range: ${ReportsState.dateRange}`,
+            '',
+            'Summary',
+            `Total Requests,${reportData.totalRequests}`,
+            `Completed,${reportData.completedRequests}`,
+            `Pending,${reportData.pendingRequests}`,
+            `Total Spend,$${reportData.totalSpend}`,
+            '',
+            'Financial',
+            `Total Estimated,$${reportData.totalEstimate}`,
+            `Total Invoiced,$${reportData.totalInvoiced}`,
+            `Total Paid,$${reportData.totalPaid}`,
+            `Outstanding,$${reportData.totalOutstanding}`,
+            '',
+            'Status Breakdown',
+            ...Object.entries(reportData.statusBreakdown).map(([s, c]) => `${s},${c}`),
+            '',
+            'Type Breakdown',
+            ...Object.entries(reportData.typeBreakdown).map(([t, c]) => `${t},${c}`),
+            '',
+            'Top Requesters',
+            ...reportData.topRequesters.map(r => `${r.name},${r.count}`)
+        ];
+
+        downloadFile(lines.join('\n'), `${filename}.csv`, 'text/csv');
+    } else {
+        downloadFile(JSON.stringify(reportData, null, 2), `${filename}.json`, 'application/json');
+    }
+
+    showToast('success', 'Report Exported', `Report downloaded as ${format.toUpperCase()}`);
+}
+
+function getStatusColor(status) {
+    const colors = {
+        'SUBMITTED': 'blue',
+        'APPROVED': 'success',
+        'REJECTED': 'error',
+        'QUOTING': 'amber',
+        'BOOKED': 'primary',
+        'COMPLETED': 'success',
+        'INVOICED': 'primary',
+        'CANCELLED': 'grey'
+    };
+    return colors[status] || 'grey';
+}
+
+// Make report functions globally available
+window.setReportDateRange = setReportDateRange;
+window.exportReport = exportReport;
 
 // =====================
 // AUDIT LOG PAGE

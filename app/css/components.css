@@ -2831,3 +2831,206 @@
     background: rgba(229, 114, 0, 0.1);
     color: var(--color-amber);
 }
+
+/* =====================
+   REPORTS PAGE STYLES
+   ===================== */
+.status-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.status-bar-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.status-bar-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.status-count {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.status-bar-track {
+    height: 8px;
+    background: var(--color-grey-100);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.status-bar-fill {
+    height: 100%;
+    border-radius: var(--radius-full);
+    transition: width 0.5s ease;
+}
+
+.type-distribution {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.type-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    background: var(--color-grey-50);
+    border-radius: var(--radius-md);
+}
+
+.type-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.type-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.type-icon.travel {
+    background: rgba(0, 114, 206, 0.1);
+    color: var(--color-blue);
+}
+
+.type-icon.catering {
+    background: rgba(229, 114, 0, 0.1);
+    color: var(--color-amber);
+}
+
+.type-info {
+    flex: 1;
+}
+
+.type-name {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+}
+
+.type-count {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
+
+.type-percentage {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.financial-metric {
+    text-align: center;
+    padding: var(--space-4);
+    background: var(--color-grey-50);
+    border-radius: var(--radius-md);
+}
+
+.metric-label {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-2);
+}
+
+.metric-value {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.top-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.top-list-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    background: var(--color-grey-50);
+    border-radius: var(--radius-md);
+}
+
+.top-rank {
+    width: 24px;
+    height: 24px;
+    border-radius: var(--radius-full);
+    background: var(--color-primary);
+    color: var(--color-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+}
+
+.top-name {
+    flex: 1;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+}
+
+.top-value {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.recent-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.recent-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3);
+    background: var(--color-grey-50);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.recent-item:hover {
+    background: var(--color-white);
+    box-shadow: var(--shadow-sm);
+}
+
+.recent-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.recent-title {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.recent-meta {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
