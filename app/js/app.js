@@ -933,6 +933,28 @@ function renderStatsCard(variant, icon, value, label, filterValue) {
     `;
 }
 
+// Display-only stats card (no click handler) - for Audit Log and other display purposes
+function renderDisplayStatsCard(variant, icon, value, label) {
+    const icons = {
+        clipboard: '<path d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm3 1h6v4H7V5zm6 6H7v2h6v-2z"/>',
+        clock: '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z"/>',
+        plane: '<path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>',
+        check: '<path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"/>',
+        users: '<path d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z"/>'
+    };
+    return `
+        <div class="stats-card">
+            <div class="stats-icon ${variant}">
+                <svg viewBox="0 0 20 20" fill="currentColor">${icons[icon] || icons.clipboard}</svg>
+            </div>
+            <div class="stats-content">
+                <div class="stats-value">${value}</div>
+                <div class="stats-label">${label}</div>
+            </div>
+        </div>
+    `;
+}
+
 function renderRequestList(requests) {
     if (!requests.length) return renderEmptyState('No requests', 'No requests to display.');
     return `<div class="request-list" style="padding: var(--space-4);">${requests.map(renderRequestCard).join('')}</div>`;
@@ -3108,10 +3130,10 @@ function renderAuditLogPage() {
 
         <!-- Stats -->
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); margin-bottom: var(--space-4);">
-            ${renderStatsCard('primary', 'clipboard', allLogs.length, 'Total Events')}
-            ${renderStatsCard('info', 'users', [...new Set(allLogs.map(l => l.actor))].length, 'Unique Actors')}
-            ${renderStatsCard('warning', 'clock', allLogs.filter(l => new Date(l.timestamp) > new Date(Date.now() - 3600000)).length, 'Last Hour')}
-            ${renderStatsCard('success', 'check', filteredLogs.length, 'Showing')}
+            ${renderDisplayStatsCard('primary', 'clipboard', allLogs.length, 'Total Events')}
+            ${renderDisplayStatsCard('info', 'users', [...new Set(allLogs.map(l => l.actor))].length, 'Unique Actors')}
+            ${renderDisplayStatsCard('warning', 'clock', allLogs.filter(l => new Date(l.timestamp) > new Date(Date.now() - 3600000)).length, 'Last Hour')}
+            ${renderDisplayStatsCard('success', 'check', filteredLogs.length, 'Showing')}
         </div>
         
         <div class="card">
