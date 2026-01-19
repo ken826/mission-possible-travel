@@ -2418,7 +2418,17 @@ function setReportDateRange(range) {
 function exportReport(format) {
     const reportData = generateReportData();
     const dateStr = new Date().toISOString().split('T')[0];
-    const filename = `report-${dateStr}-${ReportsState.dateRange}`;
+
+    // Readable date range names
+    const rangeLabels = {
+        '7days': 'last-7-days',
+        '30days': 'last-30-days',
+        '90days': 'last-90-days',
+        'year': 'this-year',
+        'all': 'all-time'
+    };
+    const rangePart = rangeLabels[ReportsState.dateRange] || ReportsState.dateRange;
+    const filename = `mission-possible-report-${dateStr}-${rangePart}`;
 
     if (format === 'csv') {
         const lines = [
