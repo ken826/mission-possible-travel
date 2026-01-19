@@ -3032,6 +3032,7 @@ window.closeAnalyticsModal = closeAnalyticsModal;
 const AuditLogState = {
     searchQuery: '',
     categoryFilter: 'ALL',
+    statsFilter: 'all', // all, lastHour
     logs: []
 };
 
@@ -3078,6 +3079,11 @@ function renderAuditLogPage() {
 
     if (AuditLogState.categoryFilter !== 'ALL') {
         filteredLogs = filteredLogs.filter(log => log.action === AuditLogState.categoryFilter);
+    }
+
+    // Apply stats filter (last hour)
+    if (AuditLogState.statsFilter === 'lastHour') {
+        filteredLogs = filteredLogs.filter(log => new Date(log.timestamp) > new Date(Date.now() - 3600000));
     }
 
     return `
@@ -3128,12 +3134,12 @@ function renderAuditLogPage() {
             </div>
         </div>
 
-        <!-- Stats -->
+        <!-- Stats - Clickable to filter -->
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); margin-bottom: var(--space-4);">
-            ${renderDisplayStatsCard('primary', 'clipboard', allLogs.length, 'Total Events')}
-            ${renderDisplayStatsCard('info', 'users', [...new Set(allLogs.map(l => l.actor))].length, 'Unique Actors')}
-            ${renderDisplayStatsCard('warning', 'clock', allLogs.filter(l => new Date(l.timestamp) > new Date(Date.now() - 3600000)).length, 'Last Hour')}
-            ${renderDisplayStatsCard('success', 'check', filteredLogs.length, 'Showing')}
+            ${renderAuditStatsCard('primary', 'clipboard', allLogs.length, 'Total Events', 'all')}
+            ${renderAuditStatsCard('info', 'users', [...new Set(allLogs.map(l => l.actor))].length, 'Unique Actors', 'all')}
+            ${renderAuditStatsCard('warning', 'clock', allLogs.filter(l => new Date(l.timestamp) > new Date(Date.now() - 3600000)).length, 'Last Hour', 'lastHour')}
+            ${renderAuditStatsCard('success', 'check', filteredLogs.length, 'Showing', 'all')}
         </div>
         
         <div class="card">
@@ -3179,6 +3185,40 @@ function filterAuditLog(searchQuery, categoryFilter) {
     if (categoryFilter !== null) AuditLogState.categoryFilter = categoryFilter;
     navigateTo('audit-log');
 }
+
+// Clickable stats card for Audit Log filtering
+function renderAuditStatsCard(variant, icon, value, label, filterType) {
+    const icons = {
+        clipboard: '<path d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm3 1h6v4H7V5zm6 6H7v2h6v-2z"/>',
+        clock: '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z"/>',
+        check: '<path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"/>',
+        users: '<path d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z"/>'
+    };
+    const isActive = AuditLogState.statsFilter === filterType;
+    const borderStyle = isActive ? 'border: 2px solid var(--color-primary); box-shadow: 0 0 0 3px rgba(0, 87, 61, 0.1);' : '';
+
+    return `
+        <div class="stats-card stats-card-clickable" onclick="setAuditStatsFilter('${filterType}')" title="Click to filter by ${label}" style="cursor: pointer; ${borderStyle}">
+            <div class="stats-icon ${variant}">
+                <svg viewBox="0 0 20 20" fill="currentColor">${icons[icon] || icons.clipboard}</svg>
+            </div>
+            <div class="stats-content">
+                <div class="stats-value">${value}</div>
+                <div class="stats-label">${label}</div>
+            </div>
+            ${isActive && filterType !== 'all' ? '<div style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 8px solid var(--color-primary);"></div>' : ''}
+        </div>
+    `;
+}
+
+function setAuditStatsFilter(filterType) {
+    AuditLogState.statsFilter = (AuditLogState.statsFilter === filterType && filterType !== 'all') ? 'all' : filterType;
+    navigateTo('audit-log');
+}
+
+// Make audit functions globally available
+window.filterAuditLog = filterAuditLog;
+window.setAuditStatsFilter = setAuditStatsFilter;
 
 function exportAuditLog(format) {
     const logs = typeof AuditLog !== 'undefined' ? AuditLog.getRecent(100) : [];
