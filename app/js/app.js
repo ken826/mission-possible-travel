@@ -2154,7 +2154,7 @@ function renderDocumentsPage() {
 
 const ReportsState = {
     dateRange: '30days', // 7days, 30days, 90days, year, all
-    reportType: 'overview' // overview, requests, financial, status
+    activeTab: 'overview' // overview, total, completed, pending, spend
 };
 
 function renderReportsPage() {
@@ -2208,14 +2208,18 @@ function renderReportsPage() {
             </div>
         </div>
         
-        <!-- Summary Stats - Clickable for Analytics -->
+        <!-- Summary Stats - Click to show analytics below -->
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); margin-bottom: var(--space-6);">
-            ${renderClickableStatsCard('primary', 'clipboard', reportData.totalRequests, 'Total Requests', 'total')}
-            ${renderClickableStatsCard('success', 'check', reportData.completedRequests, 'Completed', 'completed')}
-            ${renderClickableStatsCard('warning', 'clock', reportData.pendingRequests, 'Pending', 'pending')}
-            ${renderClickableStatsCard('info', 'currency', '$' + reportData.totalSpend.toLocaleString(), 'Total Spend', 'spend')}
+            ${renderTabStatsCard('primary', 'clipboard', reportData.totalRequests, 'Total Requests', 'total')}
+            ${renderTabStatsCard('success', 'check', reportData.completedRequests, 'Completed', 'completed')}
+            ${renderTabStatsCard('warning', 'clock', reportData.pendingRequests, 'Pending', 'pending')}
+            ${renderTabStatsCard('info', 'currency', '$' + reportData.totalSpend.toLocaleString(), 'Total Spend', 'spend')}
         </div>
         
+        <!-- Analytics Content Area -->
+        ${ReportsState.activeTab !== 'overview' ? renderInlineAnalytics(reportData) : ''}
+        
+        ${ReportsState.activeTab === 'overview' ? `
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-6); margin-bottom: var(--space-6);">
             <!-- Status Breakdown -->
             <div class="card">
@@ -2335,6 +2339,7 @@ function renderReportsPage() {
                 </div>
             </div>
         </div>
+        ` : ''}
     `;
 }
 
@@ -2480,16 +2485,19 @@ function getStatusColor(status) {
     return colors[status] || 'grey';
 }
 
-// Clickable stats card for analytics
-function renderClickableStatsCard(variant, icon, value, label, analyticsType) {
+// Tab-based stats card (shows content inline, no modal)
+function renderTabStatsCard(variant, icon, value, label, tabName) {
     const icons = {
         clipboard: '<path d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm3 1h6v4H7V5zm6 6H7v2h6v-2z"/>',
         clock: '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z"/>',
         check: '<path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"/>',
-        currency: '<path d="M10.75 10.818v2.614A3.13 3.13 0 0011.888 13c.482-.315.612-.648.612-.875 0-.227-.13-.56-.612-.875a3.13 3.13 0 00-1.138-.432zM8.33 8.62c.053.055.115.11.186.158C8.897 9.001 9.418 9.189 10 9.29V7.198c-.51.1-1.02.327-1.377.602-.156.121-.287.243-.392.428-.086.153-.126.304-.126.453 0 .149.04.3.126.453.105.185.236.307.392.428.053.042.114.085.177.128z"/><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-16.75V3.5a1 1 0 01-2 0v1.25c-.621.052-1.214.2-1.752.46-.621.3-1.18.76-1.503 1.412-.32.642-.347 1.392-.03 2.104.283.65.798 1.107 1.371 1.429.52.292 1.148.508 1.913.688v2.62c-.582-.102-1.102-.289-1.483-.512-.393-.223-.656-.47-.804-.685a1 1 0 10-1.632 1.15c.372.527.896.954 1.435 1.26.528.297 1.168.541 1.885.647V15.5a1 1 0 102 0v-1.223c.621-.053 1.214-.2 1.752-.46.621-.3 1.18-.76 1.503-1.412.32-.642.347-1.392.03-2.104-.283-.65-.798-1.107-1.371-1.429-.52-.292-1.148-.508-1.914-.688V5.563c.582.102 1.103.29 1.484.512.393.223.656.47.804.685a1 1 0 101.632-1.15c-.372-.527-.896-.954-1.435-1.26-.528-.297-1.168-.541-1.885-.647V3.5a1 1 0 00-2 0v-2.25z" clip-rule="evenodd"/>'
+        currency: '<path d="M10.75 10.818v2.614A3.13 3.13 0 0011.888 13c.482-.315.612-.648.612-.875 0-.227-.13-.56-.612-.875a3.13 3.13 0 00-1.138-.432zM8.33 8.62c.053.055.115.11.186.158C8.897 9.001 9.418 9.189 10 9.29V7.198c-.51.1-1.02.327-1.377.602-.156.121-.287.243-.392.428-.086.153-.126.304-.126.453 0 .149.04.3.126.453.105.185.236.307.392.428.053.042.114.085.177.128z"/><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM11 2.25V3.5a1 1 0 01-2 0V2.25c-.528.106-1.168.35-1.696.647-.539.306-1.063.733-1.435 1.26a1 1 0 101.632 1.15c.148-.215.411-.462.804-.685.381-.223.901-.41 1.483-.512v2.621c-.765.18-1.393.396-1.913.688-.573.322-1.088.779-1.371 1.429-.317.712-.29 1.462.03 2.104.323.652.882 1.112 1.503 1.412.538.26 1.131.407 1.752.46V13.5a1 1 0 11-2 0V12.277c-.717-.106-1.357-.35-1.885-.647-.539-.306-1.063-.733-1.435-1.26a1 1 0 111.632-1.15c.148.215.411.462.804.685.381.223.901.41 1.483.512V8c-.765-.18-1.393-.396-1.913-.688-.573-.322-1.088-.779-1.371-1.429z" clip-rule="evenodd"/>'
     };
+    const isActive = ReportsState.activeTab === tabName;
+    const borderStyle = isActive ? 'border: 2px solid var(--color-primary); box-shadow: 0 0 0 3px rgba(0, 87, 61, 0.1);' : '';
+
     return `
-        <div class="stats-card stats-card-clickable" onclick="showAnalyticsModal('${analyticsType}')" title="Click for ${label} analytics" style="cursor: pointer;">
+        <div class="stats-card stats-card-clickable" onclick="setReportTab('${tabName}')" title="Click for ${label} details" style="cursor: pointer; ${borderStyle}">
             <div class="stats-icon ${variant}">
                 <svg viewBox="0 0 20 20" fill="currentColor">${icons[icon] || icons.clipboard}</svg>
             </div>
@@ -2497,9 +2505,249 @@ function renderClickableStatsCard(variant, icon, value, label, analyticsType) {
                 <div class="stats-value">${value}</div>
                 <div class="stats-label">${label}</div>
             </div>
+            ${isActive ? '<div style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 8px solid var(--color-primary);"></div>' : ''}
         </div>
     `;
 }
+
+function setReportTab(tab) {
+    ReportsState.activeTab = (ReportsState.activeTab === tab) ? 'overview' : tab;
+    navigateTo('reports');
+}
+
+function renderInlineAnalytics(reportData) {
+    const requests = AppState.requests || [];
+    const filteredRequests = filterByDateRange(requests, ReportsState.dateRange);
+
+    let title = '';
+    let items = [];
+
+    switch (ReportsState.activeTab) {
+        case 'total':
+            title = 'All Requests Analytics';
+            items = filteredRequests;
+            break;
+        case 'completed':
+            title = 'Completed Requests';
+            items = filteredRequests.filter(r => ['COMPLETED', 'INVOICED'].includes(r.status));
+            break;
+        case 'pending':
+            title = 'Pending Requests';
+            items = filteredRequests.filter(r => ['SUBMITTED', 'APPROVED', 'QUOTING', 'BOOKED'].includes(r.status));
+            break;
+        case 'spend':
+            title = 'Spending Analytics';
+            return renderInlineSpendAnalytics(reportData, filteredRequests);
+    }
+
+    return renderInlineRequestsAnalytics(items, title, reportData);
+}
+
+function renderInlineRequestsAnalytics(items, title, reportData) {
+    // Group by type
+    const byType = {};
+    items.forEach(r => { byType[r.type] = (byType[r.type] || 0) + 1; });
+
+    // Group by requester (top 5)
+    const byRequester = {};
+    items.forEach(r => { byRequester[r.requester] = (byRequester[r.requester] || 0) + 1; });
+    const topRequesters = Object.entries(byRequester)
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
+    const totalEstimate = items.reduce((sum, r) => sum + (r.estimate || 0), 0);
+
+    return `
+        <div class="card" style="margin-bottom: var(--space-6);">
+            <div class="card-header">
+                <h3 class="card-title">${title}</h3>
+                <button class="btn btn-ghost btn-sm" onclick="setReportTab('overview')" title="Back to Overview">
+                    <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/></svg>
+                </button>
+            </div>
+            <div class="card-body">
+                <!-- Summary Metrics -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); margin-bottom: var(--space-6);">
+                    <div class="financial-metric">
+                        <div class="metric-label">Count</div>
+                        <div class="metric-value">${items.length}</div>
+                    </div>
+                    <div class="financial-metric">
+                        <div class="metric-label">Total Estimate</div>
+                        <div class="metric-value">$${totalEstimate.toLocaleString()}</div>
+                    </div>
+                    <div class="financial-metric">
+                        <div class="metric-label">Average</div>
+                        <div class="metric-value">$${items.length > 0 ? Math.round(totalEstimate / items.length).toLocaleString() : 0}</div>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); margin-bottom: var(--space-6);">
+                    <!-- By Type -->
+                    <div>
+                        <h4 style="margin-bottom: var(--space-3); font-size: var(--font-size-sm); color: var(--color-text-muted);">BY TYPE</h4>
+                        <div class="type-distribution">
+                            ${Object.entries(byType).map(([type, count]) => `
+                                <div class="type-item">
+                                    <div class="type-icon ${type.toLowerCase()}">
+                                        ${type === 'TRAVEL' ? '<svg viewBox="0 0 20 20" fill="currentColor"><path d="M3.105 2.289a.75.75 0 00-.826.95l1.414 4.925A1.5 1.5 0 005.135 9.25h6.115a.75.75 0 010 1.5H5.135a1.5 1.5 0 00-1.442 1.086l-1.414 4.926a.75.75 0 00.826.95 28.896 28.896 0 0015.293-7.154.75.75 0 000-1.115A28.897 28.897 0 003.105 2.289z"/></svg>' : '<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 3.75A2.75 2.75 0 018.75 1h2.5A2.75 2.75 0 0114 3.75v.443c.572.055 1.14.122 1.706.2C17.053 4.582 18 5.75 18 7.07v3.469c0 1.126-.694 2.191-1.83 2.54-1.952.599-4.024.921-6.17.921s-4.218-.322-6.17-.921C2.694 12.73 2 11.665 2 10.539V7.07c0-1.321.947-2.489 2.294-2.676A41.047 41.047 0 016 4.193V3.75z"/></svg>'}
+                                    </div>
+                                    <div class="type-info">
+                                        <div class="type-name">${type}</div>
+                                        <div class="type-count">${count} requests</div>
+                                    </div>
+                                    <div class="type-percentage">${items.length > 0 ? Math.round(count / items.length * 100) : 0}%</div>
+                                </div>
+                            `).join('')}
+                            ${Object.keys(byType).length === 0 ? '<p style="color: var(--color-text-muted);">No data</p>' : ''}
+                        </div>
+                    </div>
+                    
+                    <!-- Top Requesters -->
+                    <div>
+                        <h4 style="margin-bottom: var(--space-3); font-size: var(--font-size-sm); color: var(--color-text-muted);">TOP REQUESTERS</h4>
+                        ${topRequesters.length === 0 ? '<p style="color: var(--color-text-muted);">No data</p>' : `
+                            <div class="top-list">
+                                ${topRequesters.map((r, i) => `
+                                    <div class="top-list-item">
+                                        <span class="top-rank">${i + 1}</span>
+                                        <span class="top-name">${r.name}</span>
+                                        <span class="top-value">${r.count}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `}
+                    </div>
+                </div>
+                
+                <!-- Request List -->
+                <h4 style="margin-bottom: var(--space-3); font-size: var(--font-size-sm); color: var(--color-text-muted);">REQUEST LIST</h4>
+                <div style="max-height: 300px; overflow-y: auto;">
+                    ${items.length === 0 ? '<p style="color: var(--color-text-muted);">No requests in this category</p>' : `
+                        ${items.slice(0, 10).map(r => `
+                            <div class="recent-item" onclick="viewRequestDetail('${r.id}')">
+                                <div class="recent-info">
+                                    <div class="recent-title">${r.title}</div>
+                                    <div class="recent-meta">${r.id} • ${r.requester} • $${(r.estimate || 0).toLocaleString()}</div>
+                                </div>
+                                <span class="status-chip status-${r.status.toLowerCase()}">${r.status}</span>
+                            </div>
+                        `).join('')}
+                        ${items.length > 10 ? `<p style="color: var(--color-text-muted); padding: var(--space-3);">...and ${items.length - 10} more</p>` : ''}
+                    `}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderInlineSpendAnalytics(reportData, requests) {
+    const invoices = typeof InvoiceStore !== 'undefined' ? InvoiceStore.getAll() : [];
+
+    // Spending by type
+    const spendByType = {};
+    requests.forEach(r => { spendByType[r.type] = (spendByType[r.type] || 0) + (r.estimate || 0); });
+
+    // Top spenders
+    const spendByRequester = {};
+    requests.forEach(r => { spendByRequester[r.requester] = (spendByRequester[r.requester] || 0) + (r.estimate || 0); });
+    const topSpenders = Object.entries(spendByRequester)
+        .map(([name, amount]) => ({ name, amount }))
+        .sort((a, b) => b.amount - a.amount)
+        .slice(0, 5);
+
+    return `
+        <div class="card" style="margin-bottom: var(--space-6);">
+            <div class="card-header">
+                <h3 class="card-title">Spending Analytics</h3>
+                <button class="btn btn-ghost btn-sm" onclick="setReportTab('overview')" title="Back to Overview">
+                    <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/></svg>
+                </button>
+            </div>
+            <div class="card-body">
+                <!-- Financial Summary -->
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); margin-bottom: var(--space-6);">
+                    <div class="financial-metric">
+                        <div class="metric-label">Estimated</div>
+                        <div class="metric-value">$${reportData.totalEstimate.toLocaleString()}</div>
+                    </div>
+                    <div class="financial-metric">
+                        <div class="metric-label">Invoiced</div>
+                        <div class="metric-value">$${reportData.totalInvoiced.toLocaleString()}</div>
+                    </div>
+                    <div class="financial-metric">
+                        <div class="metric-label">Paid</div>
+                        <div class="metric-value" style="color: var(--color-success);">$${reportData.totalPaid.toLocaleString()}</div>
+                    </div>
+                    <div class="financial-metric">
+                        <div class="metric-label">Outstanding</div>
+                        <div class="metric-value" style="color: var(--color-amber);">$${reportData.totalOutstanding.toLocaleString()}</div>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); margin-bottom: var(--space-6);">
+                    <!-- Spending by Type -->
+                    <div>
+                        <h4 style="margin-bottom: var(--space-3); font-size: var(--font-size-sm); color: var(--color-text-muted);">SPENDING BY TYPE</h4>
+                        <div class="type-distribution">
+                            ${Object.entries(spendByType).map(([type, amount]) => `
+                                <div class="type-item">
+                                    <div class="type-icon ${type.toLowerCase()}">
+                                        ${type === 'TRAVEL' ? '<svg viewBox="0 0 20 20" fill="currentColor"><path d="M3.105 2.289a.75.75 0 00-.826.95l1.414 4.925A1.5 1.5 0 005.135 9.25h6.115a.75.75 0 010 1.5H5.135a1.5 1.5 0 00-1.442 1.086l-1.414 4.926a.75.75 0 00.826.95 28.896 28.896 0 0015.293-7.154.75.75 0 000-1.115A28.897 28.897 0 003.105 2.289z"/></svg>' : '<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 3.75A2.75 2.75 0 018.75 1h2.5A2.75 2.75 0 0114 3.75v.443c.572.055 1.14.122 1.706.2C17.053 4.582 18 5.75 18 7.07v3.469c0 1.126-.694 2.191-1.83 2.54-1.952.599-4.024.921-6.17.921s-4.218-.322-6.17-.921C2.694 12.73 2 11.665 2 10.539V7.07c0-1.321.947-2.489 2.294-2.676A41.047 41.047 0 016 4.193V3.75z"/></svg>'}
+                                    </div>
+                                    <div class="type-info">
+                                        <div class="type-name">${type}</div>
+                                        <div class="type-count">$${amount.toLocaleString()}</div>
+                                    </div>
+                                    <div class="type-percentage">${reportData.totalEstimate > 0 ? Math.round(amount / reportData.totalEstimate * 100) : 0}%</div>
+                                </div>
+                            `).join('')}
+                            ${Object.keys(spendByType).length === 0 ? '<p style="color: var(--color-text-muted);">No data</p>' : ''}
+                        </div>
+                    </div>
+                    
+                    <!-- Top Spenders -->
+                    <div>
+                        <h4 style="margin-bottom: var(--space-3); font-size: var(--font-size-sm); color: var(--color-text-muted);">TOP SPENDERS</h4>
+                        ${topSpenders.length === 0 ? '<p style="color: var(--color-text-muted);">No data</p>' : `
+                            <div class="top-list">
+                                ${topSpenders.map((r, i) => `
+                                    <div class="top-list-item">
+                                        <span class="top-rank">${i + 1}</span>
+                                        <span class="top-name">${r.name}</span>
+                                        <span class="top-value">$${r.amount.toLocaleString()}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `}
+                    </div>
+                </div>
+                
+                <!-- Recent Invoices -->
+                <h4 style="margin-bottom: var(--space-3); font-size: var(--font-size-sm); color: var(--color-text-muted);">RECENT INVOICES</h4>
+                <div style="max-height: 200px; overflow-y: auto;">
+                    ${invoices.length === 0 ? '<p style="color: var(--color-text-muted);">No invoices</p>' : `
+                        ${invoices.slice(0, 5).map(inv => `
+                            <div class="recent-item" onclick="viewInvoiceDetail('${inv.id}')">
+                                <div class="recent-info">
+                                    <div class="recent-title">${inv.id}</div>
+                                    <div class="recent-meta">${inv.vendor} • ${inv.issueDate}</div>
+                                </div>
+                                <span style="font-weight: var(--font-weight-semibold); color: var(--color-text-primary);">$${inv.total.toLocaleString()}</span>
+                            </div>
+                        `).join('')}
+                    `}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Make report functions globally available
+window.setReportDateRange = setReportDateRange;
+window.exportReport = exportReport;
+window.setReportTab = setReportTab;
 
 // Show analytics modal
 function showAnalyticsModal(type) {
