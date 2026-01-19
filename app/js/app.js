@@ -199,6 +199,12 @@ function handleLogin(e) {
             };
             AppState.isAuthenticated = true;
             localStorage.setItem('missionPossibleUser', JSON.stringify(AppState.currentUser));
+
+            // Log login to audit
+            if (typeof AuditLog !== 'undefined') {
+                AuditLog.log('USER_LOGIN', { userId: user.id, email: user.email });
+            }
+
             showMainApp();
             showToast('success', 'Welcome back!', `Signed in as ${user.name}`);
             return;
@@ -222,6 +228,11 @@ function handleLogin(e) {
 }
 
 function handleLogout() {
+    // Log logout to audit
+    if (typeof AuditLog !== 'undefined') {
+        AuditLog.log('USER_LOGOUT', { userId: AppState.currentUser?.id, email: AppState.currentUser?.email });
+    }
+
     cleanupNotifications(); // Clean up notification subscription
     AppState.currentUser = null;
     AppState.isAuthenticated = false;
@@ -1120,6 +1131,16 @@ async function submitRequest() {
             await window.NotificationService.helpers.requestSubmitted(newRequest, coordinatorEmails);
         }
 
+        // Log to audit
+        if (typeof AuditLog !== 'undefined') {
+            AuditLog.log('REQUEST_CREATED', {
+                requestId: newRequest.id,
+                type: newRequest.type,
+                title: newRequest.title,
+                requester: newRequest.requester
+            });
+        }
+
         closeModal();
         // Reset form
         document.getElementById('travel-form')?.reset();
@@ -1172,6 +1193,15 @@ async function handleApprove(id) {
                 );
             }
 
+            // Log to audit
+            if (typeof AuditLog !== 'undefined') {
+                AuditLog.log('REQUEST_APPROVED', {
+                    requestId: id,
+                    approver: AppState.currentUser?.name,
+                    requester: req.requester
+                });
+            }
+
             navigateTo(AppState.currentPage);
             showToast('success', 'Request approved', `${id} has been approved and sent to Ops for processing.`);
         } catch (error) {
@@ -1199,6 +1229,15 @@ async function handleReject(id) {
                     AppState.currentUser?.name || 'Approver',
                     '' // No reason provided in this flow
                 );
+            }
+
+            // Log to audit
+            if (typeof AuditLog !== 'undefined') {
+                AuditLog.log('REQUEST_REJECTED', {
+                    requestId: id,
+                    rejectedBy: AppState.currentUser?.name,
+                    requester: req.requester
+                });
             }
 
             navigateTo(AppState.currentPage);
