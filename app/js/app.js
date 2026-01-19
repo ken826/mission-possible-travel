@@ -2535,10 +2535,11 @@ function showAnalyticsModal(type) {
 
     // Create and show modal
     const modal = document.createElement('div');
-    modal.className = 'modal-backdrop';
     modal.id = 'analytics-modal';
+    modal.style.cssText = 'position: fixed; inset: 0; z-index: 999; display: flex; align-items: center; justify-content: center; padding: 24px;';
     modal.innerHTML = `
-        <div class="modal" style="max-width: 800px; max-height: 80vh; overflow-y: auto;">
+        <div style="position: absolute; inset: 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px);" onclick="closeAnalyticsModal()"></div>
+        <div class="modal" style="position: relative; max-width: 800px; width: 100%; max-height: 80vh; overflow-y: auto; background: var(--color-white); border-radius: var(--radius-xl); box-shadow: var(--shadow-2xl);">
             <div class="modal-header">
                 <h2 class="modal-title">${title}</h2>
                 <button class="btn btn-ghost" onclick="closeAnalyticsModal()">
