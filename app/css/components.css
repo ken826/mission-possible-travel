@@ -2804,3 +2804,30 @@
         align-items: center;
     }
 }
+/* =====================
+   AUDIT LOG ICON TYPES
+   ===================== */
+.audit-icon-user {
+    background: rgba(0, 114, 206, 0.1);
+    color: var(--color-blue);
+}
+
+.audit-icon-success {
+    background: rgba(120, 190, 32, 0.1);
+    color: var(--color-success);
+}
+
+.audit-icon-error {
+    background: rgba(200, 30, 30, 0.1);
+    color: var(--color-error);
+}
+
+.audit-icon-info {
+    background: rgba(0, 87, 61, 0.1);
+    color: var(--color-primary);
+}
+
+.audit-icon-warning {
+    background: rgba(229, 114, 0, 0.1);
+    color: var(--color-amber);
+}

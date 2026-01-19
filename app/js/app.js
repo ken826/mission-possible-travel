@@ -2150,41 +2150,237 @@ function renderDocumentsPage() {
 // =====================
 // AUDIT LOG PAGE
 // =====================
+
+// Audit log state
+const AuditLogState = {
+    searchQuery: '',
+    categoryFilter: 'ALL',
+    logs: []
+};
+
 function renderAuditLogPage() {
-    const logs = typeof AuditLog !== 'undefined' ? AuditLog.getRecent(50) : [];
+    // Admin only access check
+    if (AppState.currentUser?.role !== 'ADMIN') {
+        return `
+            <div class="page-header">
+                <div class="page-header-content">
+                    <h1 class="page-title">Access Denied</h1>
+                    <p class="page-subtitle">You do not have permission to view the Audit Log.</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <div class="empty-state" style="padding: var(--space-8);">
+                        <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
+                        </svg>
+                        <h3 class="empty-state-title">Admin Access Required</h3>
+                        <p class="empty-state-desc">Only administrators can view the audit log.</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    const allLogs = typeof AuditLog !== 'undefined' ? AuditLog.getRecent(100) : [];
+
+    // Get unique action categories
+    const categories = [...new Set(allLogs.map(l => l.action))].sort();
+
+    // Apply filters
+    let filteredLogs = allLogs;
+
+    if (AuditLogState.searchQuery) {
+        const query = AuditLogState.searchQuery.toLowerCase();
+        filteredLogs = filteredLogs.filter(log =>
+            log.action.toLowerCase().includes(query) ||
+            log.actor.toLowerCase().includes(query) ||
+            JSON.stringify(log.details).toLowerCase().includes(query)
+        );
+    }
+
+    if (AuditLogState.categoryFilter !== 'ALL') {
+        filteredLogs = filteredLogs.filter(log => log.action === AuditLogState.categoryFilter);
+    }
 
     return `
         <div class="page-header">
             <div class="page-header-content">
                 <h1 class="page-title">Audit Log</h1>
-                <p class="page-subtitle">Track all system activity and user actions.</p>
+                <p class="page-subtitle">Track all system activity and user actions. Admin access only.</p>
+            </div>
+            <div class="page-actions">
+                <button class="btn btn-secondary" onclick="exportAuditLog('csv')">
+                    <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;">
+                        <path d="M10.75 2.75a.75.75 0 00-1.5 0v8.614L6.295 8.235a.75.75 0 10-1.09 1.03l4.25 4.5a.75.75 0 001.09 0l4.25-4.5a.75.75 0 00-1.09-1.03l-2.955 3.129V2.75z"/>
+                        <path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z"/>
+                    </svg>
+                    Export CSV
+                </button>
+                <button class="btn btn-secondary" onclick="exportAuditLog('json')">
+                    <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;">
+                        <path fill-rule="evenodd" d="M4.5 2A1.5 1.5 0 003 3.5v13A1.5 1.5 0 004.5 18h11a1.5 1.5 0 001.5-1.5V7.621a1.5 1.5 0 00-.44-1.06l-4.12-4.122A1.5 1.5 0 0011.378 2H4.5z" clip-rule="evenodd"/>
+                    </svg>
+                    Export JSON
+                </button>
             </div>
         </div>
         
-        <div class="card">
+        <!-- Search and Filter -->
+        <div class="card" style="margin-bottom: var(--space-4);">
             <div class="card-body">
-                <div class="audit-log">
-                    ${logs.map(log => `
-                        <div class="audit-item">
-                            <div class="audit-icon">
-                                <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z"/></svg>
-                            </div>
-                            <div class="audit-content">
-                                <div class="audit-action">${formatAuditAction(log.action)}</div>
-                                <div class="audit-details">${log.actor} • ${JSON.stringify(log.details).substring(0, 50)}...</div>
-                            </div>
-                            <div class="audit-meta">${new Date(log.timestamp).toLocaleString('en-AU')}</div>
-                        </div>
-                    `).join('')}
+                <div style="display: grid; grid-template-columns: 1fr auto; gap: var(--space-4); align-items: end;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Search</label>
+                        <input type="text" 
+                               class="form-input" 
+                               placeholder="Search by action, actor, or details..."
+                               value="${AuditLogState.searchQuery}"
+                               oninput="filterAuditLog(this.value, null)">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0; min-width: 200px;">
+                        <label class="form-label">Category</label>
+                        <select class="form-select" onchange="filterAuditLog(null, this.value)">
+                            <option value="ALL" ${AuditLogState.categoryFilter === 'ALL' ? 'selected' : ''}>All Categories</option>
+                            ${categories.map(cat => `
+                                <option value="${cat}" ${AuditLogState.categoryFilter === cat ? 'selected' : ''}>${formatAuditAction(cat)}</option>
+                            `).join('')}
+                        </select>
+                    </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); margin-bottom: var(--space-4);">
+            ${renderStatsCard('primary', 'clipboard', allLogs.length, 'Total Events')}
+            ${renderStatsCard('info', 'users', [...new Set(allLogs.map(l => l.actor))].length, 'Unique Actors')}
+            ${renderStatsCard('warning', 'clock', allLogs.filter(l => new Date(l.timestamp) > new Date(Date.now() - 3600000)).length, 'Last Hour')}
+            ${renderStatsCard('success', 'check', filteredLogs.length, 'Showing')}
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Activity Log</h3>
+                <span style="font-size: var(--font-size-sm); color: var(--color-text-muted);">${filteredLogs.length} entries</span>
+            </div>
+            <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                ${filteredLogs.length === 0 ? `
+                    <div class="empty-state" style="padding: var(--space-6);">
+                        <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
+                        </svg>
+                        <h3 class="empty-state-title">No matching entries</h3>
+                        <p class="empty-state-desc">Try adjusting your search or filter criteria.</p>
+                    </div>
+                ` : `
+                    <div class="audit-log">
+                        ${filteredLogs.map(log => `
+                            <div class="audit-item">
+                                <div class="audit-icon ${getAuditIconClass(log.action)}">
+                                    ${getAuditIcon(log.action)}
+                                </div>
+                                <div class="audit-content">
+                                    <div class="audit-action">${formatAuditAction(log.action)}</div>
+                                    <div class="audit-details">
+                                        <strong>${log.actor}</strong> • 
+                                        ${formatAuditDetails(log.details)}
+                                    </div>
+                                </div>
+                                <div class="audit-meta">${new Date(log.timestamp).toLocaleString('en-AU')}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `}
             </div>
         </div>
     `;
 }
 
+function filterAuditLog(searchQuery, categoryFilter) {
+    if (searchQuery !== null) AuditLogState.searchQuery = searchQuery;
+    if (categoryFilter !== null) AuditLogState.categoryFilter = categoryFilter;
+    navigateTo('audit-log');
+}
+
+function exportAuditLog(format) {
+    const logs = typeof AuditLog !== 'undefined' ? AuditLog.getRecent(100) : [];
+
+    if (format === 'csv') {
+        const headers = ['Timestamp', 'Action', 'Actor', 'Details'];
+        const rows = logs.map(log => [
+            new Date(log.timestamp).toISOString(),
+            log.action,
+            log.actor,
+            JSON.stringify(log.details)
+        ]);
+
+        const csv = [headers.join(','), ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
+        downloadFile(csv, 'audit-log.csv', 'text/csv');
+    } else {
+        const json = JSON.stringify(logs, null, 2);
+        downloadFile(json, 'audit-log.json', 'application/json');
+    }
+
+    showToast('success', 'Export Complete', `Audit log exported as ${format.toUpperCase()}`);
+}
+
+function downloadFile(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
 function formatAuditAction(action) {
     return action.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
 }
+
+function formatAuditDetails(details) {
+    if (!details || Object.keys(details).length === 0) return 'No details';
+
+    const parts = [];
+    if (details.requestId) parts.push(`Request: ${details.requestId}`);
+    if (details.email) parts.push(`Email: ${details.email}`);
+    if (details.userId) parts.push(`User ID: ${details.userId}`);
+    if (details.type) parts.push(`Type: ${details.type}`);
+    if (details.documentId) parts.push(`Doc: ${details.documentId}`);
+    if (details.amount) parts.push(`Amount: $${details.amount}`);
+
+    return parts.length > 0 ? parts.join(' | ') : JSON.stringify(details).substring(0, 60);
+}
+
+function getAuditIconClass(action) {
+    if (action.includes('LOGIN') || action.includes('LOGOUT')) return 'audit-icon-user';
+    if (action.includes('APPROVED')) return 'audit-icon-success';
+    if (action.includes('REJECTED')) return 'audit-icon-error';
+    if (action.includes('CREATED') || action.includes('UPLOADED')) return 'audit-icon-info';
+    if (action.includes('CHANGED') || action.includes('UPDATED')) return 'audit-icon-warning';
+    return '';
+}
+
+function getAuditIcon(action) {
+    if (action.includes('LOGIN') || action.includes('LOGOUT')) {
+        return '<svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z"/></svg>';
+    }
+    if (action.includes('APPROVED')) {
+        return '<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/></svg>';
+    }
+    if (action.includes('REJECTED')) {
+        return '<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"/></svg>';
+    }
+    if (action.includes('CREATED') || action.includes('UPLOADED')) {
+        return '<svg viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"/></svg>';
+    }
+    return '<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z"/></svg>';
+}
+
+// Make audit functions globally available
+window.filterAuditLog = filterAuditLog;
+window.exportAuditLog = exportAuditLog;
 
 function startQuoting(id) {
     const req = AppState.requests.find(r => r.id === id);
