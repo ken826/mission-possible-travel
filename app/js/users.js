@@ -1,68 +1,90 @@
 /**
  * Mission Possible Travel - User Management System
  * Admin user management with role assignment and account control
- * Now with Firestore persistence for cross-device sync
+ * Now with Supabase persistence for cross-device sync
  */
 
 // =====================
-// USER STORE (Firestore-backed)
+// PASSWORD HASHING UTILITY
+// =====================
+async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Pre-computed SHA-256 hashes for default passwords
+// demo123 => hash, admin123 => hash
+const DEFAULT_PASSWORD_HASHES = {};
+(async () => {
+    DEFAULT_PASSWORD_HASHES.demo = await hashPassword('demo123');
+    DEFAULT_PASSWORD_HASHES.admin = await hashPassword('admin123');
+})();
+
+// =====================
+// USER STORE (Supabase-backed)
 // =====================
 const UserStore = {
     users: [],
-    collectionName: 'users',
+    tableName: 'users',
     isInitialized: false,
-    unsubscribe: null,
+    realtimeChannel: null,
 
-    // Default users for initial setup
-    getDefaultUsers() {
+    // Default users for initial setup (passwords are SHA-256 hashed)
+    async getDefaultUsers() {
+        const demoHash = await hashPassword('demo123');
+        const adminHash = await hashPassword('admin123');
         return [
-            { id: '1', name: 'Glenda', email: 'glenda@mhfa.com.au', password: 'demo123', role: 'COORDINATOR', status: 'active', created: '2025-01-01' },
-            { id: '2', name: 'Amanda', email: 'amanda@mhfa.com.au', password: 'demo123', role: 'COORDINATOR', status: 'active', created: '2025-01-01' },
-            { id: '3', name: 'Sarah', email: 'sarah@mhfa.com.au', password: 'demo123', role: 'EMPLOYEE', status: 'active', created: '2025-06-15' },
-            { id: '4', name: 'David', email: 'director@mhfa.com.au', password: 'demo123', role: 'APPROVER', status: 'active', created: '2025-01-01' },
-            { id: '5', name: 'Mel', email: 'mel@fcct.com.au', password: 'demo123', role: 'VENDOR', status: 'active', company: 'Flight Centre Corporate Travel', created: '2025-03-01' },
-            { id: '6', name: 'Admin', email: 'admin@mhfa.com.au', password: 'admin123', role: 'ADMIN', status: 'active', created: '2025-01-01' }
+            { id: '1', name: 'Glenda', email: 'glenda@mhfa.com.au', password: demoHash, role: 'COORDINATOR', status: 'active', created: '2025-01-01' },
+            { id: '2', name: 'Amanda', email: 'amanda@mhfa.com.au', password: demoHash, role: 'COORDINATOR', status: 'active', created: '2025-01-01' },
+            { id: '3', name: 'Sarah', email: 'sarah@mhfa.com.au', password: demoHash, role: 'EMPLOYEE', status: 'active', created: '2025-06-15' },
+            { id: '4', name: 'David', email: 'director@mhfa.com.au', password: demoHash, role: 'APPROVER', status: 'active', created: '2025-01-01' },
+            { id: '5', name: 'Mel', email: 'mel@fcct.com.au', password: demoHash, role: 'VENDOR', status: 'active', company: 'Flight Centre Corporate Travel', created: '2025-03-01' },
+            { id: '6', name: 'Admin', email: 'admin@mhfa.com.au', password: adminHash, role: 'ADMIN', status: 'active', created: '2025-01-01' }
         ];
     },
 
     async init() {
         if (this.isInitialized) return;
 
-        // Try Firestore first
-        if (window.FirebaseDB) {
+        // Try Supabase first
+        if (window.SupabaseClient) {
             try {
-                // Check if users collection exists and has data
-                const snapshot = await window.FirebaseDB
-                    .collection(this.collectionName)
-                    .limit(1)
-                    .get();
+                // Check if users table exists and has data
+                const { data, error } = await window.SupabaseClient
+                    .from(this.tableName)
+                    .select('id')
+                    .limit(1);
+
+                if (error) throw error;
 
                 // If empty, initialize with default users
-                if (snapshot.empty) {
-                    console.log('Initializing default users in Firestore...');
-                    const defaultUsers = this.getDefaultUsers();
-                    const batch = window.FirebaseDB.batch();
+                if (!data || data.length === 0) {
+                    console.log('Initializing default users in Supabase...');
+                    const defaultUsers = await this.getDefaultUsers();
 
-                    for (const user of defaultUsers) {
-                        const docRef = window.FirebaseDB.collection(this.collectionName).doc(user.id);
-                        batch.set(docRef, user);
-                    }
+                    const { error: insertError } = await window.SupabaseClient
+                        .from(this.tableName)
+                        .insert(defaultUsers);
 
-                    await batch.commit();
-                    console.log('Default users initialized in Firestore');
+                    if (insertError) throw insertError;
+
+                    console.log('Default users initialized in Supabase');
                 }
 
                 // Load all users
-                await this.loadFromFirestore();
+                await this.loadFromSupabase();
 
                 // Subscribe to real-time updates
                 this.subscribeToChanges();
 
                 this.isInitialized = true;
-                console.log('UserStore initialized with Firestore');
+                console.log('UserStore initialized with Supabase');
                 return;
             } catch (error) {
-                console.error('Firestore init error, falling back to localStorage:', error);
+                console.error('Supabase init error, falling back to localStorage:', error);
             }
         }
 
@@ -72,54 +94,62 @@ const UserStore = {
         console.log('UserStore initialized with localStorage (fallback)');
     },
 
-    async loadFromFirestore() {
-        if (!window.FirebaseDB) return;
+    async loadFromSupabase() {
+        if (!window.SupabaseClient) return;
 
         try {
-            const snapshot = await window.FirebaseDB
-                .collection(this.collectionName)
-                .orderBy('created', 'desc')
-                .get();
+            const { data, error } = await window.SupabaseClient
+                .from(this.tableName)
+                .select('*')
+                .order('created', { ascending: false });
 
-            this.users = snapshot.docs.map(doc => ({
-                ...doc.data(),
-                _docId: doc.id
-            }));
+            if (error) throw error;
+
+            this.users = data || [];
         } catch (error) {
-            console.error('Error loading users from Firestore:', error);
+            console.error('Error loading users from Supabase:', error);
         }
     },
 
-    loadFromLocalStorage() {
+    async loadFromLocalStorage() {
         const saved = localStorage.getItem('mptUsers');
         if (saved) {
             this.users = JSON.parse(saved);
         } else {
-            this.users = this.getDefaultUsers();
+            this.users = await this.getDefaultUsers();
             this.saveToLocalStorage();
         }
     },
 
     subscribeToChanges() {
-        if (!window.FirebaseDB) return;
+        if (!window.SupabaseClient) return;
 
-        this.unsubscribe = window.FirebaseDB
-            .collection(this.collectionName)
-            .onSnapshot(
-                (snapshot) => {
-                    this.users = snapshot.docs.map(doc => ({
-                        ...doc.data(),
-                        _docId: doc.id
-                    }));
+        // Clean up existing subscription
+        if (this.realtimeChannel) {
+            window.SupabaseClient.removeChannel(this.realtimeChannel);
+        }
+
+        this.realtimeChannel = window.SupabaseClient
+            .channel('users-changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: this.tableName
+                },
+                async (payload) => {
+                    console.log('User update received:', payload);
+                    await this.loadFromSupabase();
                     // Refresh UI if on user management page
                     if (window.AppState?.currentPage === 'user-management') {
                         window.navigateTo?.('user-management');
                     }
-                },
-                (error) => {
-                    console.error('Error in users real-time listener:', error);
                 }
-            );
+            )
+            .subscribe((status) => {
+                console.log('Users subscription status:', status);
+            });
     },
 
     saveToLocalStorage() {
@@ -136,7 +166,7 @@ const UserStore = {
     },
 
     getById(id) {
-        return this.users.find(u => u.id === id || u._docId === id);
+        return this.users.find(u => u.id === id);
     },
 
     getByEmail(email) {
@@ -144,24 +174,28 @@ const UserStore = {
     },
 
     async create(userData) {
+        // Hash the password before storing
+        const hashedPassword = userData.password ? await hashPassword(userData.password) : await hashPassword('changeme');
         const newUser = {
             id: String(Date.now()),
             ...userData,
+            password: hashedPassword,
             status: 'active',
             created: new Date().toISOString().split('T')[0]
         };
 
-        if (window.FirebaseDB) {
+        if (window.SupabaseClient) {
             try {
-                const docRef = await window.FirebaseDB
-                    .collection(this.collectionName)
-                    .doc(newUser.id)
-                    .set(newUser);
+                const { error } = await window.SupabaseClient
+                    .from(this.tableName)
+                    .insert(newUser);
+
+                if (error) throw error;
 
                 // Reload to get the document
-                await this.loadFromFirestore();
+                await this.loadFromSupabase();
             } catch (error) {
-                console.error('Error creating user in Firestore:', error);
+                console.error('Error creating user in Supabase:', error);
                 // Fallback to local
                 this.users.push(newUser);
                 this.saveToLocalStorage();
@@ -184,14 +218,19 @@ const UserStore = {
 
         const oldRole = user.role;
 
-        if (window.FirebaseDB) {
+        if (window.SupabaseClient) {
             try {
-                await window.FirebaseDB
-                    .collection(this.collectionName)
-                    .doc(user.id || user._docId)
-                    .update(updates);
+                const { error } = await window.SupabaseClient
+                    .from(this.tableName)
+                    .update(updates)
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                // Update local copy
+                Object.assign(user, updates);
             } catch (error) {
-                console.error('Error updating user in Firestore:', error);
+                console.error('Error updating user in Supabase:', error);
                 Object.assign(user, updates);
                 this.saveToLocalStorage();
             }
@@ -237,7 +276,8 @@ const UserStore = {
         const user = this.getById(id);
         if (!user) return false;
 
-        await this.update(id, { password: newPassword });
+        const hashedPassword = await hashPassword(newPassword);
+        await this.update(id, { password: hashedPassword });
 
         if (typeof AuditLog !== 'undefined') {
             AuditLog.log('PASSWORD_RESET', { userId: id, email: user.email });
@@ -246,11 +286,13 @@ const UserStore = {
         return true;
     },
 
-    authenticate(email, password) {
+    async authenticate(email, password) {
         const user = this.getByEmail(email);
         if (!user) return { success: false, error: 'User not found' };
         if (user.status === 'suspended') return { success: false, error: 'Account suspended' };
-        if (user.password !== password) return { success: false, error: 'Invalid password' };
+
+        const hashedInput = await hashPassword(password);
+        if (user.password !== hashedInput) return { success: false, error: 'Invalid password' };
 
         if (typeof AuditLog !== 'undefined') {
             AuditLog.log('USER_LOGIN', { userId: user.id, email: user.email });
@@ -480,7 +522,7 @@ async function resetUserPassword(userId) {
     const newPassword = 'reset' + Math.random().toString(36).substring(2, 8);
     try {
         await UserStore.resetPassword(userId, newPassword);
-        showToast('success', 'Password Reset', `Password for ${user.name} has been reset to: ${newPassword}`);
+        showToast('success', 'Password Reset', `Password for ${user.name} has been reset. Please share the new password securely.`);
     } catch (error) {
         console.error('Error resetting password:', error);
         showToast('error', 'Reset Failed', 'Unable to reset password. Please try again.');

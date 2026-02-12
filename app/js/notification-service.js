@@ -1,11 +1,11 @@
 /**
  * Mission Possible Travel - Notification Service
- * Firestore-backed notification system with real-time updates
+ * Supabase-backed notification system with real-time updates
  */
 
 const NotificationService = {
-    collectionName: 'notifications',
-    unsubscribe: null,
+    tableName: 'notifications',
+    realtimeChannel: null,
 
     /**
      * Create a new notification
@@ -13,22 +13,33 @@ const NotificationService = {
      * @returns {Promise<string>} - Notification ID
      */
     async create(notification) {
-        if (!window.FirebaseDB) {
-            console.warn('Firestore not available for notifications');
+        if (!window.SupabaseClient) {
+            console.warn('Supabase not available for notifications');
             return null;
         }
 
         try {
-            const docRef = await window.FirebaseDB
-                .collection(this.collectionName)
-                .add({
-                    ...notification,
-                    read: false,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+            // Build database record with snake_case columns only
+            const dbRecord = {
+                user_id: notification.userId,
+                type: notification.type,
+                title: notification.title,
+                message: notification.message,
+                request_id: notification.requestId || null,
+                read: false,
+                created_at: new Date().toISOString()
+            };
 
-            console.log('Notification created:', docRef.id);
-            return docRef.id;
+            const { data, error } = await window.SupabaseClient
+                .from(this.tableName)
+                .insert(dbRecord)
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            console.log('Notification created:', data.id);
+            return data.id;
         } catch (error) {
             console.error('Error creating notification:', error);
             return null;
@@ -41,20 +52,27 @@ const NotificationService = {
      * @returns {Promise<Array>} - Array of notifications
      */
     async getForUser(userId) {
-        if (!window.FirebaseDB) return [];
+        if (!window.SupabaseClient) return [];
 
         try {
-            const snapshot = await window.FirebaseDB
-                .collection(this.collectionName)
-                .where('userId', '==', userId)
-                .orderBy('createdAt', 'desc')
-                .limit(50)
-                .get();
+            const { data, error } = await window.SupabaseClient
+                .from(this.tableName)
+                .select('*')
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false })
+                .limit(50);
 
-            return snapshot.docs.map(doc => ({
+            if (error) throw error;
+
+            return (data || []).map(doc => ({
                 id: doc.id,
-                ...doc.data(),
-                time: this.formatTime(doc.data().createdAt?.toDate())
+                userId: doc.user_id,
+                type: doc.type,
+                title: doc.title,
+                message: doc.message,
+                requestId: doc.request_id,
+                read: doc.read,
+                time: this.formatTime(new Date(doc.created_at))
             }));
         } catch (error) {
             console.error('Error fetching notifications:', error);
@@ -68,38 +86,46 @@ const NotificationService = {
      * @param {Function} callback - Callback with notifications array
      */
     subscribeToUserNotifications(userId, callback) {
-        if (!window.FirebaseDB) {
-            console.warn('Firestore not available for notification subscription');
+        if (!window.SupabaseClient) {
+            console.warn('Supabase not available for notification subscription');
             return () => { };
         }
 
         // Unsubscribe from previous listener
-        if (this.unsubscribe) {
-            this.unsubscribe();
+        if (this.realtimeChannel) {
+            window.SupabaseClient.removeChannel(this.realtimeChannel);
         }
 
         try {
-            this.unsubscribe = window.FirebaseDB
-                .collection(this.collectionName)
-                .where('userId', '==', userId)
-                .orderBy('createdAt', 'desc')
-                .limit(50)
-                .onSnapshot(
-                    (snapshot) => {
-                        const notifications = snapshot.docs.map(doc => ({
-                            id: doc.id,
-                            ...doc.data(),
-                            time: this.formatTime(doc.data().createdAt?.toDate())
-                        }));
-                        callback(notifications);
+            this.realtimeChannel = window.SupabaseClient
+                .channel(`notifications-${userId}`)
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: this.tableName,
+                        filter: `user_id=eq.${userId}`
                     },
-                    (error) => {
-                        console.error('Notification subscription error:', error);
-                        callback([]);
+                    async (payload) => {
+                        console.log('Notification update received:', payload);
+                        const notifications = await this.getForUser(userId);
+                        callback(notifications);
                     }
-                );
+                )
+                .subscribe((status) => {
+                    console.log('Notification subscription status:', status);
+                });
 
-            return this.unsubscribe;
+            // Initial data load
+            this.getForUser(userId).then(notifications => callback(notifications));
+
+            return () => {
+                if (this.realtimeChannel) {
+                    window.SupabaseClient.removeChannel(this.realtimeChannel);
+                    this.realtimeChannel = null;
+                }
+            };
         } catch (error) {
             console.error('Error setting up notification subscription:', error);
             return () => { };
@@ -111,13 +137,15 @@ const NotificationService = {
      * @param {string} notificationId - Notification document ID
      */
     async markRead(notificationId) {
-        if (!window.FirebaseDB) return false;
+        if (!window.SupabaseClient) return false;
 
         try {
-            await window.FirebaseDB
-                .collection(this.collectionName)
-                .doc(notificationId)
-                .update({ read: true });
+            const { error } = await window.SupabaseClient
+                .from(this.tableName)
+                .update({ read: true })
+                .eq('id', notificationId);
+
+            if (error) throw error;
             return true;
         } catch (error) {
             console.error('Error marking notification read:', error);
@@ -130,21 +158,16 @@ const NotificationService = {
      * @param {string} userId - User ID or email
      */
     async markAllRead(userId) {
-        if (!window.FirebaseDB) return false;
+        if (!window.SupabaseClient) return false;
 
         try {
-            const snapshot = await window.FirebaseDB
-                .collection(this.collectionName)
-                .where('userId', '==', userId)
-                .where('read', '==', false)
-                .get();
+            const { error } = await window.SupabaseClient
+                .from(this.tableName)
+                .update({ read: true })
+                .eq('user_id', userId)
+                .eq('read', false);
 
-            const batch = window.FirebaseDB.batch();
-            snapshot.docs.forEach(doc => {
-                batch.update(doc.ref, { read: true });
-            });
-
-            await batch.commit();
+            if (error) throw error;
             return true;
         } catch (error) {
             console.error('Error marking all notifications read:', error);
@@ -157,20 +180,15 @@ const NotificationService = {
      * @param {string} userId - User ID or email
      */
     async clearAll(userId) {
-        if (!window.FirebaseDB) return false;
+        if (!window.SupabaseClient) return false;
 
         try {
-            const snapshot = await window.FirebaseDB
-                .collection(this.collectionName)
-                .where('userId', '==', userId)
-                .get();
+            const { error } = await window.SupabaseClient
+                .from(this.tableName)
+                .delete()
+                .eq('user_id', userId);
 
-            const batch = window.FirebaseDB.batch();
-            snapshot.docs.forEach(doc => {
-                batch.delete(doc.ref);
-            });
-
-            await batch.commit();
+            if (error) throw error;
             return true;
         } catch (error) {
             console.error('Error clearing notifications:', error);
@@ -183,13 +201,15 @@ const NotificationService = {
      * @param {string} notificationId - Notification document ID
      */
     async delete(notificationId) {
-        if (!window.FirebaseDB) return false;
+        if (!window.SupabaseClient) return false;
 
         try {
-            await window.FirebaseDB
-                .collection(this.collectionName)
-                .doc(notificationId)
-                .delete();
+            const { error } = await window.SupabaseClient
+                .from(this.tableName)
+                .delete()
+                .eq('id', notificationId);
+
+            if (error) throw error;
             return true;
         } catch (error) {
             console.error('Error deleting notification:', error);

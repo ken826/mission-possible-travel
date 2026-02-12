@@ -1,0 +1,11 @@
+{
+    "version": 2,
+    "buildCommand": null,
+    "outputDirectory": "app",
+    "rewrites": [
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ]
+}

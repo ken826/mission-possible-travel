@@ -5,7 +5,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Mission Possible Travel - Travel and Catering Operations for MHFA Australia">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.firebaseio.com https://*.googleapis.com https://firestore.googleapis.com; img-src 'self' data: https:;">
     <title>Mission Possible Travel | MHFA Australia</title>
+
+    <!-- Runtime Config: Replace these with your actual keys (DO NOT commit real keys) -->
+    <meta name="config:firebase-api-key" content="AIzaSyDL-8VdUKdxNFHZDb4EZpC65gUPT95613g">
+    <meta name="config:firebase-auth-domain" content="mission-possible-travel.firebaseapp.com">
+    <meta name="config:firebase-project-id" content="mission-possible-travel">
+    <meta name="config:firebase-storage-bucket" content="mission-possible-travel.firebasestorage.app">
+    <meta name="config:firebase-messaging-sender-id" content="916557832414">
+    <meta name="config:firebase-app-id" content="1:916557832414:web:9b1b1c4ffbef4bb12b224f">
+    <meta name="config:firebase-measurement-id" content="G-85CBJSBJ25">
+    <meta name="config:supabase-url" content="https://mnwxsjgtcztfykbokfrz.supabase.co">
+    <meta name="config:supabase-anon-key"
+        content="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ud3hzamd0Y3p0ZnlrYm9rZnJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4NjMzNTQsImV4cCI6MjA4NjQzOTM1NH0.U8XWHk7IJIEHZaYQtjaHryobYJHh_BAAKzdh6yJbt5I">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -606,13 +620,15 @@
     <!-- Toast Notifications Container -->
     <div id="toast-container" class="toast-container"></div>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- Firebase Configuration -->
-    <script src="js/firebase-config.js"></script>
-    <script src="js/firestore-service.js"></script>
+    <!-- Runtime Config Loader (must load first) -->
+    <script src="js/config.js"></script>
+
+    <!-- Supabase Configuration -->
+    <script src="js/supabase-config.js"></script>
+    <script src="js/supabase-service.js"></script>
     <script src="js/notification-service.js"></script>
 
     <!-- Scripts -->

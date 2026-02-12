@@ -14,15 +14,13 @@ const AppState = {
     statusFilter: 'pending'
 };
 
-// Demo users for testing
-const DEMO_USERS = {
-    'glenda@mhfa.com.au': { id: '1', name: 'Glenda', email: 'glenda@mhfa.com.au', role: 'OPS_COORDINATOR', avatar: 'G' },
-    'amanda@mhfa.com.au': { id: '2', name: 'Amanda', email: 'amanda@mhfa.com.au', role: 'OPS_COORDINATOR', avatar: 'A' },
-    'sarah@mhfa.com.au': { id: '3', name: 'Sarah', email: 'sarah@mhfa.com.au', role: 'EMPLOYEE', avatar: 'S' },
-    'director@mhfa.com.au': { id: '4', name: 'David', email: 'director@mhfa.com.au', role: 'APPROVER', avatar: 'D' },
-    'mel@fcct.com.au': { id: '5', name: 'Mel', email: 'mel@fcct.com.au', role: 'VENDOR', avatar: 'M', company: 'Flight Centre Corporate Travel' },
-    'admin@mhfa.com.au': { id: '6', name: 'Admin', email: 'admin@mhfa.com.au', role: 'ADMIN', avatar: '⚙' }
-};
+// HTML Escape utility to prevent XSS
+function escapeHtml(str) {
+    if (typeof str !== 'string') return str;
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
 
 // Unsubscribe function for real-time listener
 let unsubscribeRequests = null;
@@ -81,12 +79,13 @@ function setupEventListeners() {
     // Login form
     document.getElementById('login-form')?.addEventListener('submit', handleLogin);
 
-    // Demo user buttons
+    // Demo user buttons - only set the email, not the password
     document.querySelectorAll('.demo-user-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const email = btn.dataset.email;
             document.getElementById('email').value = email;
-            document.getElementById('password').value = 'demo123';
+            document.getElementById('password').value = '';
+            document.getElementById('password').focus();
         });
     });
 
@@ -170,14 +169,19 @@ function checkAuthState() {
     }
 }
 
-function handleLogin(e) {
+async function handleLogin(e) {
     e.preventDefault();
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
 
-    // First try UserStore (includes all users created via User Management)
+    if (!email || !password) {
+        showToast('error', 'Login failed', 'Please enter email and password');
+        return;
+    }
+
+    // Authenticate via UserStore only (no DEMO_USERS bypass)
     if (typeof UserStore !== 'undefined') {
-        const result = UserStore.authenticate(email, password);
+        const result = await UserStore.authenticate(email, password);
         if (result.success) {
             const user = result.user;
             // Map UserStore roles to app roles for compatibility
@@ -206,7 +210,7 @@ function handleLogin(e) {
             }
 
             showMainApp();
-            showToast('success', 'Welcome back!', `Signed in as ${user.name}`);
+            showToast('success', 'Welcome back!', `Signed in as ${escapeHtml(user.name)}`);
             return;
         } else if (result.error === 'Account suspended') {
             showToast('error', 'Account Suspended', 'Your account has been suspended. Contact an administrator.');
@@ -214,17 +218,7 @@ function handleLogin(e) {
         }
     }
 
-    // Fallback to DEMO_USERS for backward compatibility
-    const demoUser = DEMO_USERS[email];
-    if (demoUser) {
-        AppState.currentUser = demoUser;
-        AppState.isAuthenticated = true;
-        localStorage.setItem('missionPossibleUser', JSON.stringify(demoUser));
-        showMainApp();
-        showToast('success', 'Welcome back!', `Signed in as ${demoUser.name}`);
-    } else {
-        showToast('error', 'Login failed', 'Invalid email or password');
-    }
+    showToast('error', 'Login failed', 'Invalid email or password');
 }
 
 function handleLogout() {
@@ -1377,7 +1371,16 @@ function renderRequestDetail(requestId) {
     const actions = typeof getAllowedActions !== 'undefined' ? getAllowedActions(AppState.currentUser, req) : [];
     const showForward = actions.includes('forward_to_finance');
     const timeline = getRequestTimeline(req);
-    const notes = req.notes || [];
+    // Handle notes as string from database
+    let notes = req.notes || [];
+    if (typeof notes === 'string') {
+        try {
+            notes = JSON.parse(notes);
+        } catch (e) {
+            notes = [];
+        }
+    }
+    if (!Array.isArray(notes)) notes = [];
 
     const typeIcon = req.type === 'TRAVEL'
         ? '<path d="M21 16v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2"/><path d="M3 8l2.5-4h13L21 8"/>'
@@ -1602,7 +1605,19 @@ function renderDetailsTab(req) {
             <div class="detail-section">
                 <h3 class="detail-section-title">Dietary Requirements</h3>
                 <div class="dietary-tags">
-                    ${(req.dietary || ['Vegetarian option', 'Gluten-free option']).map(d => `<span class="dietary-tag">${d}</span>`).join('')}
+                    ${(() => {
+                let dietary = req.dietary || ['Vegetarian option', 'Gluten-free option'];
+                // Handle string from database (could be JSON or comma-separated)
+                if (typeof dietary === 'string') {
+                    try {
+                        dietary = JSON.parse(dietary);
+                    } catch (e) {
+                        dietary = dietary.split(',').map(s => s.trim()).filter(s => s);
+                    }
+                }
+                if (!Array.isArray(dietary)) dietary = [];
+                return dietary.map(d => `<span class="dietary-tag">${d}</span>`).join('');
+            })()}
                 </div>
             </div>
         `;
@@ -3605,7 +3620,7 @@ function closePasswordModal() {
     document.body.style.overflow = '';
 }
 
-function changePassword() {
+async function changePassword() {
     const current = document.getElementById('current-password')?.value;
     const newPwd = document.getElementById('new-password')?.value;
     const confirm = document.getElementById('confirm-password')?.value;
@@ -3625,9 +3640,14 @@ function changePassword() {
         return;
     }
 
-    // Update password in UserStore if available
+    // Verify current password before allowing change
     if (typeof UserStore !== 'undefined' && AppState.currentUser) {
-        UserStore.resetPassword(AppState.currentUser.id, newPwd);
+        const verifyResult = await UserStore.authenticate(AppState.currentUser.email, current);
+        if (!verifyResult.success) {
+            showToast('error', 'Error', 'Current password is incorrect.');
+            return;
+        }
+        await UserStore.resetPassword(AppState.currentUser.id, newPwd);
     }
 
     closePasswordModal();
