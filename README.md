@@ -137,7 +137,7 @@ Vercel will serve the `app/` directory as a static site.
 | [ADR-009](docs/adr/adr-009.md) | Role-Based Access Control and Auditing | ✅ Accepted |
 | [ADR-010](docs/adr/adr-010.md) | Technology Stack and Deployment Strategy | ✅ Accepted |
 | [ADR-011](docs/adr/adr-011.md) | UI/UX Design Principles and Branding | ✅ Accepted |
-| [ADR-012](docs/adr/adr-012.md) | Emergency Support and Out-of-Band Handling | ✅ Accepted |
+
 
 ---
 
