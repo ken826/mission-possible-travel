@@ -37,7 +37,7 @@ const UserStore = {
         const demoHash = await hashPassword('demo123');
         const adminHash = await hashPassword('admin123');
         return [
-            { id: '1', name: 'Glenda', email: 'glenda@mhfa.com.au', password: demoHash, role: 'COORDINATOR', status: 'active', created: '2025-01-01' },
+            { id: '1', name: 'Glenda Norwood', email: 'glendan@mhfa.com.au', password: demoHash, role: 'COORDINATOR', status: 'active', created: '2025-01-01' },
             { id: '2', name: 'Amanda', email: 'amanda@mhfa.com.au', password: demoHash, role: 'COORDINATOR', status: 'active', created: '2025-01-01' },
             { id: '3', name: 'Sarah', email: 'sarah@mhfa.com.au', password: demoHash, role: 'EMPLOYEE', status: 'active', created: '2025-06-15' },
             { id: '4', name: 'David', email: 'director@mhfa.com.au', password: demoHash, role: 'APPROVER', status: 'active', created: '2025-01-01' },

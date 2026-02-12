@@ -197,7 +197,7 @@ const AuditLog = {
 
     init() {
         this.logs = [
-            { id: 1, action: 'USER_LOGIN', actor: 'Glenda', timestamp: '2026-01-15T08:00:00', details: { email: 'glenda@mhfa.com.au' } },
+            { id: 1, action: 'USER_LOGIN', actor: 'Glenda Norwood', timestamp: '2026-01-15T08:00:00', details: { email: 'glendan@mhfa.com.au' } },
             { id: 2, action: 'REQUEST_CREATED', actor: 'Sarah', timestamp: '2026-01-14T10:30:00', details: { requestId: 'REQ-2026-001' } },
             { id: 3, action: 'DOCUMENT_UPLOADED', actor: 'Glenda', timestamp: '2026-01-12T14:30:00', details: { documentId: 'DOC-001', type: 'QUOTE' } },
             { id: 4, action: 'REQUEST_APPROVED', actor: 'David', timestamp: '2026-01-13T11:00:00', details: { requestId: 'REQ-2026-003' } },
