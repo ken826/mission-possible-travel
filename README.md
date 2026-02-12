@@ -12,19 +12,31 @@
 
 ### Why "Mission: Possible"?
 
-The name reflects our commitment to making what was once a complex, time-consuming mission — coordinating travel approvals, vendor quotes, bookings, and reconciliation — into something seamless and delightful. Every request is a "mission" that our operations team, Glenda and Amanda, can now complete with ease.
+The name reflects our commitment to making what was once a complex, time-consuming mission — coordinating travel approvals, vendor quotes, bookings, and reconciliation — into something seamless and delightful.
 
 ---
 
-## 👥 Key Users
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | Vanilla HTML, CSS, JavaScript (no framework) |
+| **Database** | [Supabase](https://supabase.com) (PostgreSQL + Realtime) |
+| **Auth** | Application-level RBAC with SHA-256 password hashing |
+| **Hosting** | [Vercel](https://vercel.com) |
+| **Source Control** | GitHub |
+
+---
+
+## 👥 User Roles
 
 | Role | Description | Primary Actions |
 |------|-------------|-----------------|
-| **Employee** | Any MHFA staff member requesting travel or catering | Submit requests, review options, track status |
-| **Ops Coordinator** | Glenda, Amanda — the operations heroes | Triage, coordinate, book, document |
+| **Employee** | Any MHFA staff member | Submit requests, review options, track status |
+| **Ops Coordinator** | Operations team | Triage, coordinate, book, document |
 | **Approver** | Executive Directors, CEO | Review and approve/reject requests |
-| **Finance** | Accounts team | Reconcile invoices, generate reports |
-| **Partner** *(Phase 2)* | External vendors like Flight Centre (Mel) | View assigned requests, upload quotes |
+| **Vendor** | External partners (e.g. Flight Centre) | View assigned requests, upload quotes |
+| **Admin** | System administrator | Manage users, roles, and system settings |
 
 ---
 
@@ -48,9 +60,69 @@ stateDiagram-v2
 
 ---
 
-## 📚 Architecture Decision Records (ADRs)
+## 🚀 Getting Started
 
-The following ADRs document the key architectural decisions for Mission: Possible:
+### Prerequisites
+
+- A [Supabase](https://supabase.com) project
+- A [Vercel](https://vercel.com) account (for hosting) or any static file server
+
+### Local Development
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/ken826/mission-possible-travel.git
+   cd mission-possible-travel
+   ```
+
+2. **Configure environment**
+
+   Edit the `<meta>` config tags in `app/index.html` with your own Supabase and Firebase credentials:
+   ```html
+   <meta name="config:supabase-url" content="YOUR_SUPABASE_URL">
+   <meta name="config:supabase-anon-key" content="YOUR_SUPABASE_ANON_KEY">
+   ```
+
+   > ⚠️ **Never commit real API keys to a public repository.** For production, inject these values server-side or via environment variables through your hosting platform.
+
+3. **Set up the database**
+
+   Run the SQL in `supabase-setup.sql` in your Supabase project's SQL Editor to create the required tables (`users`, `requests`, `notifications`).
+
+4. **Serve locally**
+
+   Open `app/index.html` directly in a browser, or use any local server:
+   ```bash
+   npx serve app
+   ```
+
+5. **Default users**
+
+   The app will auto-seed default user accounts on first load when the `users` table is empty. Contact the project admin for credentials.
+
+### Deploying to Vercel
+
+The project includes a `vercel.json` for zero-config deployment:
+
+```bash
+npx vercel --prod
+```
+
+Vercel will serve the `app/` directory as a static site.
+
+---
+
+## 🔒 Security
+
+- **API keys** are loaded at runtime from `<meta>` tags — not hardcoded in JavaScript source
+- **Passwords** are hashed with SHA-256 before storage (via Web Crypto API)
+- **Content Security Policy** (CSP) is set via meta tag
+- **XSS prevention** via `escapeHtml()` utility for user-generated content
+- **RBAC** with permission-based access control
+
+---
+
+## 📚 Architecture Decision Records (ADRs)
 
 | ADR | Title | Status |
 |-----|-------|--------|
@@ -71,8 +143,6 @@ The following ADRs document the key architectural decisions for Mission: Possibl
 
 ## 🏗️ Implementation Epics
 
-The build is organised into six progressive epics:
-
 | Epic | Focus | Key Deliverables |
 |------|-------|------------------|
 | **E1** | [Foundations & RBAC](docs/epics/epic-e1-foundations-rbac.md) | App shell, authentication, roles, audit framework |
@@ -89,7 +159,7 @@ The build is organised into six progressive epics:
 Mission: Possible follows the **MHFA Australia Brand Guidelines 2024**, featuring:
 
 - **Primary Colours**: MHFA Dark Green `#00573D`, MHFA Green `#00AA52`
-- **Typography**: Clean, accessible fonts
+- **Typography**: Clean, accessible fonts (Inter)
 - **Design Ethos**: Calm, professional, reassuring — reflecting the organisation's mental health focus
 
 See [brand-colours-mhfa.md](docs/branding/brand-colours-mhfa%20copy.md) for the full colour palette.
@@ -111,12 +181,6 @@ erDiagram
 ```
 
 See [domain-model-diagram.md](docs/mermaid/domain-model-diagram.md) for the complete entity relationship diagram.
-
----
-
-## 🚀 Getting Started
-
-*Coming soon: Development setup instructions*
 
 ---
 
