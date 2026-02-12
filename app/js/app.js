@@ -79,15 +79,7 @@ function setupEventListeners() {
     // Login form
     document.getElementById('login-form')?.addEventListener('submit', handleLogin);
 
-    // Demo user buttons - only set the email, not the password
-    document.querySelectorAll('.demo-user-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const email = btn.dataset.email;
-            document.getElementById('email').value = email;
-            document.getElementById('password').value = '';
-            document.getElementById('password').focus();
-        });
-    });
+
 
     // User menu toggle
     document.getElementById('user-menu-toggle')?.addEventListener('click', toggleUserMenu);
